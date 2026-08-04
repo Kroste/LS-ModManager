@@ -64,7 +64,20 @@ public sealed class AppSettingsService
         }
         catch (Exception ex)
         {
-            Log.Warn(ex, "Settings-Datei defekt — nutze Defaults");
+            // Kroste-Persistenz-Regel: defekte Datei NIE kommentarlos überschreiben.
+            // Als .broken sichern — Diagnose bleibt möglich, Nutzer verliert die
+            // Original-Werte nicht endgültig, App startet mit Defaults weiter.
+            var brokenPath = _configPath + ".broken";
+            try
+            {
+                if (File.Exists(brokenPath)) File.Delete(brokenPath);
+                File.Move(_configPath, brokenPath);
+                Log.Error(ex, "Settings-Datei defekt — als .broken gesichert: {p}", brokenPath);
+            }
+            catch (Exception moveEx)
+            {
+                Log.Warn(moveEx, "Konnte defekte Settings nicht als .broken sichern");
+            }
             return new AppSettings();
         }
     }

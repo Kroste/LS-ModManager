@@ -40,7 +40,9 @@
     `mods`-Unterordner (den legt der erste Install an).
   - `ModInstallService`: List/Install/Uninstall/Enable-Toggle (via
     `.zip.disabled`-Suffix). Cached Preview-PNGs unter LocalAppData/cache.
-  - `AppSettingsService`: JSON unter `%APPDATA%` / `$XDG_CONFIG_HOME`, atomar.
+  - `AppSettingsService`: JSON unter `%APPDATA%` / `$XDG_CONFIG_HOME`, atomar
+    (tmp+move). Defekte Datei wird als `settings.json.broken` gesichert, App
+    startet mit Defaults weiter (Kroste-Persistenz-Regel).
   - `ModHubService`: HTTPS auf `farming-simulator.com/mods.php`, HTML-Parser mit
     HtmlAgilityPack (defensiv). Zwei Card-Layouts: `.machines--mods`
     (Empfehlungen, `<h3>`) und `.mod-item` (Katalog-Liste, `<h4>`).
@@ -96,9 +98,6 @@
   - **Vollständiges Self-Update** nach `references/autoupdate.md`
     (Windows-ZIP-Install-Batch, AppImage-Ersetzung, tar.gz-Rebuild). Aktuell
     haben wir nur den Check — reine Notification ist gegen den Kroste-Standard.
-  - **`.broken`-Backup im `AppSettingsService`** — defekte Settings-Datei als
-    `.broken` sichern statt still mit Defaults zu überschreiben (Kroste-
-    Persistenz-Regel).
   - **Backup/Restore der Mod-Konfiguration** (ZIP mit aktiven Mods + Meta).
 - **Groß (mehrere Runden):**
   - **Multi-Profile** (Karriere-abhängige Mod-Sets).
