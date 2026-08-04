@@ -109,6 +109,12 @@
   <data name="Tab_Downloads" xml:space="preserve"><value>⬇ Downloads</value></data>
 
   <data name="Installed_SearchPlaceholder" xml:space="preserve"><value>🔍  Installierte Mods filtern (Titel, Autor, Dateiname) …</value></data>
+  <data name="Installed_SortLabel" xml:space="preserve"><value>Sortierung:</value></data>
+  <data name="Installed_Sort_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Installed_Sort_Size" xml:space="preserve"><value>Größe</value></data>
+  <data name="Installed_Sort_Date" xml:space="preserve"><value>Installationsdatum</value></data>
+  <data name="Installed_Sort_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Installed_UpdateFilter" xml:space="preserve"><value>⬆ Nur mit Update</value></data>
   <data name="Installed_StatusActive" xml:space="preserve"><value>Aktiv</value></data>
   <data name="Installed_StatusDisabled" xml:space="preserve"><value>Deaktiviert</value></data>
   <data name="Installed_BulkSelectedSuffix" xml:space="preserve"><value>ausgewählt:</value></data>

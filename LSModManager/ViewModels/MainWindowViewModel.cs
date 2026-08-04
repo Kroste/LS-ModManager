@@ -58,6 +58,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         ModPath = _paths.GetModPath() ?? "";
         _statusText = L.T("Status_Ready");
+        _selectedSortOption = SortOptions[0]; // Default: nach Name sortieren
 
         // Sprachwechsel im laufenden Betrieb: ModPathStatusText und CurrentVersionText
         // sind computed-Properties mit L.T-Aufrufen — die müssen bei Sprachwechsel neu
@@ -242,6 +243,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     partial void OnInstalledSearchTextChanged(string value) => RebuildInstalledView();
 
+    /// <summary>Filter „nur Mods mit verfügbarem Update" (aus dem Ergebnis von
+    /// „Updates prüfen"). Standardmäßig aus.</summary>
+    [ObservableProperty]
+    private bool _showOnlyWithUpdate;
+
+    partial void OnShowOnlyWithUpdateChanged(bool value) => RebuildInstalledView();
+
+    /// <summary>Sortierung der Installiert-Liste. Standard: Name.</summary>
+    public IReadOnlyList<InstalledSortOption> SortOptions { get; } = new[]
+    {
+        new InstalledSortOption(InstalledSortKey.Name, LocalizedString.Get("Installed_Sort_Name")),
+        new InstalledSortOption(InstalledSortKey.Size, LocalizedString.Get("Installed_Sort_Size")),
+        new InstalledSortOption(InstalledSortKey.Date, LocalizedString.Get("Installed_Sort_Date")),
+        new InstalledSortOption(InstalledSortKey.Status, LocalizedString.Get("Installed_Sort_Status")),
+    };
+
+    [ObservableProperty]
+    private InstalledSortOption? _selectedSortOption;
+
+    partial void OnSelectedSortOptionChanged(InstalledSortOption? value) => RebuildInstalledView();
+
     /// <summary>Aktive GIANTS-Kategorie (Filter). Null = alle.</summary>
     [ObservableProperty]
     private ModHubCategory? _selectedCategory;
@@ -302,17 +324,35 @@ public sealed partial class MainWindowViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    /// <summary>Baut die gefilterte Installiert-Ansicht neu (bei Refresh oder Suchtext-Wechsel).</summary>
+    /// <summary>Baut die gefilterte + sortierte Installiert-Ansicht neu
+    /// (bei Refresh, Suchtext-, Sort- oder Update-Filter-Wechsel).</summary>
     private void RebuildInstalledView()
     {
         var filter = InstalledSearchText?.Trim();
+        IEnumerable<InstalledModItemViewModel> query = _allInstalled;
+
+        if (!string.IsNullOrEmpty(filter))
+            query = query.Where(m => MatchesInstalledFilter(m, filter));
+
+        if (ShowOnlyWithUpdate)
+            query = query.Where(m => m.HasUpdate);
+
+        query = SortInstalled(query, SelectedSortOption?.Key ?? InstalledSortKey.Name);
+
         InstalledMods.Clear();
-        foreach (var m in _allInstalled)
-        {
-            if (string.IsNullOrEmpty(filter) || MatchesInstalledFilter(m, filter))
-                InstalledMods.Add(m);
-        }
+        foreach (var m in query) InstalledMods.Add(m);
     }
+
+    private static IEnumerable<InstalledModItemViewModel> SortInstalled(
+        IEnumerable<InstalledModItemViewModel> source, InstalledSortKey key) => key switch
+    {
+        InstalledSortKey.Size   => source.OrderByDescending(m => m.Model.FileSizeBytes),
+        InstalledSortKey.Date   => source.OrderByDescending(m => m.Model.InstalledUtc),
+        // Status: Aktive zuerst, dann deaktivierte — bei gleichem Status nach Name.
+        InstalledSortKey.Status => source.OrderByDescending(m => m.Model.IsEnabled)
+                                          .ThenBy(m => m.DisplayTitle, StringComparer.OrdinalIgnoreCase),
+        _                       => source.OrderBy(m => m.DisplayTitle, StringComparer.OrdinalIgnoreCase),
+    };
 
     private static bool MatchesInstalledFilter(InstalledModItemViewModel item, string filter) =>
         item.DisplayTitle.Contains(filter, StringComparison.OrdinalIgnoreCase)

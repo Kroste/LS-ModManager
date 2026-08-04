@@ -117,9 +117,28 @@
             <TabItem Header="{loc:Tr Tab_Installed}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
-                        <TextBox DockPanel.Dock="Top" Margin="14,10,14,6"
-                                 Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="{loc:Tr Installed_SearchPlaceholder}" />
+                        <!-- Toolbar oben: Suche + Sort + Update-Filter in einer Zeile.
+                             Suche nimmt den vollen Rest, Sort und Filter sind Auto-Width. -->
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto"
+                              Margin="14,10,14,6" ColumnSpacing="8">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     PlaceholderText="{loc:Tr Installed_SearchPlaceholder}" />
+                            <ToggleButton Grid.Column="1"
+                                          IsChecked="{Binding ShowOnlyWithUpdate}"
+                                          Content="{loc:Tr Installed_UpdateFilter}" />
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                       Classes="secondary" Text="{loc:Tr Installed_SortLabel}" />
+                            <ComboBox Grid.Column="3" Width="180"
+                                      ItemsSource="{Binding SortOptions}"
+                                      SelectedItem="{Binding SelectedSortOption}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding LabelWrapper.Value}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
                         <!-- Bulk-Toolbar: sichtbar sobald mind. 1 Item markiert ist (Ctrl-Klick / Shift-Klick) -->
                         <Border DockPanel.Dock="Top" Padding="14,4,14,6"
                                 Background="{DynamicResource KrosteAccentSoftBrush}"

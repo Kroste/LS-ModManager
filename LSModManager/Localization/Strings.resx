@@ -133,6 +133,12 @@
 
   <!-- ============ Installed tab ============ -->
   <data name="Installed_SearchPlaceholder" xml:space="preserve"><value>🔍  Filter installed mods (title, author, filename) …</value></data>
+  <data name="Installed_SortLabel" xml:space="preserve"><value>Sort:</value></data>
+  <data name="Installed_Sort_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Installed_Sort_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Installed_Sort_Date" xml:space="preserve"><value>Install date</value></data>
+  <data name="Installed_Sort_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Installed_UpdateFilter" xml:space="preserve"><value>⬆ Only with update</value></data>
   <data name="Installed_StatusActive" xml:space="preserve"><value>Active</value></data>
   <data name="Installed_StatusDisabled" xml:space="preserve"><value>Disabled</value></data>
   <data name="Installed_BulkSelectedSuffix" xml:space="preserve"><value>selected:</value></data>
