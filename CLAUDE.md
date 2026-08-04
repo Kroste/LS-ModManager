@@ -3,7 +3,8 @@
 ## Grundlagen
 
 - **Was:** Mod-Manager für Landwirtschaftssimulator 25 — Mods installieren,
-  aktivieren/deaktivieren, deinstallieren, ModHub-Katalog browsen.
+  aktivieren/deaktivieren, deinstallieren, Mod-Katalog aus drei Quellen
+  (GIANTS-ModHub, Modhoster, Hof Hirschfeld) browsen.
 - **Stack:** C# / .NET 10 / Avalonia 12.1, CommunityToolkit.Mvvm,
   Microsoft.Extensions.DependencyInjection, NLog (mit Secret-Masking),
   HtmlAgilityPack, Pfim + SkiaSharp (DDS-Dekodierung), xunit.v3 +
@@ -106,7 +107,7 @@
     nach 1,5 s. Proxy-aware via `WebRequest.DefaultWebProxy`
     (Arbeitslaptop-Sophos).
 - MainWindow: Header + Toolbar-Sektionen (Spiel / Installation / System) +
-  TabControl mit drei Tabs (Installiert / ModHub-Katalog / Downloads) +
+  TabControl mit drei Tabs (Installiert / Mod-Katalog / Downloads) +
   Statusbar mit Live-Progress. Toolbar hat „🚜 LS25 starten" (Steam-URI) und
   „🔄 Updates prüfen". Card-basierter Look, kein Fluent-Grau.
 - Installed-Tab: Live-Suche oben (Titel/Autor/Filename, filtert `_allInstalled`

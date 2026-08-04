@@ -11,7 +11,7 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
 
 ## Features
 
-- **📦 Mods installieren:** ZIP auswählen oder direkt aus dem ModHub-Katalog
+- **📦 Mods installieren:** ZIP auswählen oder direkt aus dem Mod-Katalog
   herunterladen — die App kopiert die Datei in den korrekten LS25-Mod-Ordner
   und liest Titel/Autor/Version/Beschreibung aus der `modDesc.xml`.
 - **🌐 Drei Katalog-Quellen in einem Tab (~11.000 Mods gesamt):** Der offizielle
@@ -98,7 +98,7 @@ chmod +x LSModManager-*-x86_64.AppImage
    verfügbarem Update zusätzlich „⬇ Update installieren". **Mehrere Mods
    markieren** (Ctrl-Klick / Shift-Klick) blendet oben eine Bulk-Leiste
    ein: „⏻ Alle aktivieren / deaktivieren / 🗑 alle deinstallieren".
-3. **Neue Mods entdecken (Tab „🌐 ModHub-Katalog"):** Kategorie-Dropdown +
+3. **Neue Mods entdecken (Tab „🌐 Mod-Katalog"):** Kategorie-Dropdown +
    Live-Suche links. Pro Karte „📥 Herunterladen" (lädt direkt in den
    Downloads-Ordner) und „👁 Details" (Detailfenster mit Screenshots und
    Beschreibung). Doppelklick auf eine Karte öffnet ebenfalls die Details.

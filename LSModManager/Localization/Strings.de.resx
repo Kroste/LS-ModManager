@@ -39,7 +39,7 @@
   <data name="Status_UpdateInstalled" xml:space="preserve"><value>✓ Update installiert: {0} ({1} → {2})</value></data>
   <data name="Status_UpdateFailed" xml:space="preserve"><value>Update-Fehler: {0}</value></data>
   <data name="Status_CatalogFromCache" xml:space="preserve"><value>Katalog aus Cache: {0} Einträge (vor {1}). ↺ für Frische.</value></data>
-  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Lade ModHub-Katalog (Seite 1) …</value></data>
+  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Lade Mod-Katalog (Seite 1) …</value></data>
   <data name="Status_CatalogEmpty" xml:space="preserve"><value>Katalog leer oder nicht erreichbar (siehe Log).</value></data>
   <data name="Status_CatalogPage1Loaded" xml:space="preserve"><value>Katalog: {0} Einträge (Seite 1), Rest wird nachgeladen …</value></data>
   <data name="Status_CatalogPageLoaded" xml:space="preserve"><value>Katalog: {0} Einträge (Seite {1} geladen) …</value></data>
@@ -101,7 +101,7 @@
   <data name="Statusbar_InstalledCountSuffix" xml:space="preserve"><value>installiert</value></data>
 
   <data name="Tab_Installed" xml:space="preserve"><value>📦 Installiert</value></data>
-  <data name="Tab_Catalog" xml:space="preserve"><value>🌐 ModHub-Katalog</value></data>
+  <data name="Tab_Catalog" xml:space="preserve"><value>🌐 Mod-Katalog</value></data>
   <data name="Tab_Downloads" xml:space="preserve"><value>⬇ Downloads</value></data>
 
   <data name="Installed_SearchPlaceholder" xml:space="preserve"><value>🔍  Installierte Mods filtern (Titel, Autor, Dateiname) …</value></data>
@@ -140,8 +140,8 @@
   <data name="Settings_ModFolder_ManualPathPlaceholder" xml:space="preserve"><value>Leer lassen für Auto-Erkennung</value></data>
   <data name="Settings_ModFolder_Browse" xml:space="preserve"><value>Durchsuchen…</value></data>
   <data name="Settings_ModFolder_Redetect" xml:space="preserve"><value>Neu erkennen</value></data>
-  <data name="Settings_Section_Catalog" xml:space="preserve"><value>ModHub-Katalog</value></data>
-  <data name="Settings_Catalog_Description" xml:space="preserve"><value>Sprache und Cache-Verhalten für den ModHub-Katalog.</value></data>
+  <data name="Settings_Section_Catalog" xml:space="preserve"><value>Mod-Katalog</value></data>
+  <data name="Settings_Catalog_Description" xml:space="preserve"><value>Sprache und Cache-Verhalten für den Mod-Katalog (GIANTS, Modhoster, Hof Hirschfeld).</value></data>
   <data name="Settings_Catalog_Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="Settings_Catalog_AutoRefresh" xml:space="preserve"><value>Katalog-Cache automatisch aktualisieren</value></data>
   <data name="Settings_Catalog_AutoRefreshHint" xml:space="preserve"><value>Beim Start wird der Cache neu geladen, wenn er älter als die eingestellte Zeit ist. „↺“ im Katalog-Tab erzwingt manuell einen Refresh.</value></data>

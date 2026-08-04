@@ -50,7 +50,7 @@
   <data name="Status_UpdateInstalled" xml:space="preserve"><value>✓ Update installed: {0} ({1} → {2})</value></data>
   <data name="Status_UpdateFailed" xml:space="preserve"><value>Update error: {0}</value></data>
   <data name="Status_CatalogFromCache" xml:space="preserve"><value>Catalog from cache: {0} entries ({1} ago). ↺ to refresh.</value></data>
-  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Loading ModHub catalog (page 1) …</value></data>
+  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Loading mod catalog (page 1) …</value></data>
   <data name="Status_CatalogEmpty" xml:space="preserve"><value>Catalog empty or unreachable (see log).</value></data>
   <data name="Status_CatalogPage1Loaded" xml:space="preserve"><value>Catalog: {0} entries (page 1), rest is loading …</value></data>
   <data name="Status_CatalogPageLoaded" xml:space="preserve"><value>Catalog: {0} entries (page {1} loaded) …</value></data>
@@ -123,7 +123,7 @@
 
   <!-- ============ Tabs ============ -->
   <data name="Tab_Installed" xml:space="preserve"><value>📦 Installed</value></data>
-  <data name="Tab_Catalog" xml:space="preserve"><value>🌐 ModHub catalog</value></data>
+  <data name="Tab_Catalog" xml:space="preserve"><value>🌐 Mod catalog</value></data>
   <data name="Tab_Downloads" xml:space="preserve"><value>⬇ Downloads</value></data>
 
   <!-- ============ Installed tab ============ -->
@@ -166,8 +166,8 @@
   <data name="Settings_ModFolder_ManualPathPlaceholder" xml:space="preserve"><value>Leave empty for auto-detection</value></data>
   <data name="Settings_ModFolder_Browse" xml:space="preserve"><value>Browse…</value></data>
   <data name="Settings_ModFolder_Redetect" xml:space="preserve"><value>Re-detect</value></data>
-  <data name="Settings_Section_Catalog" xml:space="preserve"><value>ModHub catalog</value></data>
-  <data name="Settings_Catalog_Description" xml:space="preserve"><value>Language and cache behavior for the ModHub catalog.</value></data>
+  <data name="Settings_Section_Catalog" xml:space="preserve"><value>Mod catalog</value></data>
+  <data name="Settings_Catalog_Description" xml:space="preserve"><value>Language and cache behavior for the mod catalog (GIANTS, Modhoster, Hof Hirschfeld).</value></data>
   <data name="Settings_Catalog_Language" xml:space="preserve"><value>Language</value></data>
   <data name="Settings_Catalog_AutoRefresh" xml:space="preserve"><value>Auto-refresh catalog cache</value></data>
   <data name="Settings_Catalog_AutoRefreshHint" xml:space="preserve"><value>On startup the cache is reloaded if it is older than the configured age. „↺“ in the catalog tab always forces a manual refresh.</value></data>

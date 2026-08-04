@@ -214,7 +214,7 @@
                 </Border>
             </TabItem>
 
-            <!-- ==== ModHub-Katalog ==== -->
+            <!-- ==== Mod-Katalog (GIANTS + Modhoster + Hof Hirschfeld) ==== -->
             <TabItem Header="{loc:Tr Tab_Catalog}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
