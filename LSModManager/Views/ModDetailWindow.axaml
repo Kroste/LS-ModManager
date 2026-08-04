@@ -91,7 +91,15 @@
                 <!-- Beschreibung -->
                 <Border Classes="card">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="{loc:Tr ModDetail_Description}" Classes="section-label" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{loc:Tr ModDetail_Description}" Classes="section-label" />
+                            <!-- Zusammenfassen-Button nur wenn KI konfiguriert. Bei laufender
+                                 Anfrage disabled + Text-Wechsel. -->
+                            <Button Grid.Column="1" Classes="ghost" FontSize="12" Padding="8,2"
+                                    Content="{loc:Tr ModDetail_AiSummarize}"
+                                    Command="{Binding SummarizeCommand}"
+                                    IsVisible="{Binding IsAiEnabled}" />
+                        </Grid>
                         <TextBox Text="{Binding Description, Mode=OneWay}"
                                  IsReadOnly="True"
                                  AcceptsReturn="True"
@@ -100,6 +108,59 @@
                                  BorderThickness="0"
                                  Padding="0"
                                  MinHeight="200" />
+                    </StackPanel>
+                </Border>
+
+                <!-- KI-Zusammenfassung: Card taucht auf sobald SummaryText gefüllt ist -->
+                <Border Classes="card" IsVisible="{Binding HasSummary}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{loc:Tr ModDetail_AiSummary}" Classes="section-label"
+                                   Foreground="{DynamicResource KrosteGoldBrush}" />
+                        <TextBlock Text="{Binding SummaryText}" TextWrapping="Wrap"
+                                   Classes="secondary" FontSize="13" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Ähnliche Mods: Card immer sichtbar wenn KI aktiv. Button startet Suche;
+                     Ergebnisse als Mini-Cards mit Klick auf Browser. -->
+                <Border Classes="card" IsVisible="{Binding IsAiEnabled}">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{loc:Tr ModDetail_AiSimilar}" Classes="section-label"
+                                       Foreground="{DynamicResource KrosteGoldBrush}" />
+                            <Button Grid.Column="1" Classes="ghost" FontSize="12" Padding="8,2"
+                                    Content="{loc:Tr ModDetail_AiSimilarLoad}"
+                                    Command="{Binding FindSimilarModsCommand}" />
+                        </Grid>
+                        <TextBlock Text="{loc:Tr ModDetail_AiSimilarNone}"
+                                   Classes="muted" FontSize="12"
+                                   IsVisible="{Binding SimilarNoResults}" />
+                        <ItemsControl ItemsSource="{Binding SimilarMods}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:ModHubItemViewModel">
+                                    <Border Classes="card" Margin="0,0,0,6" Padding="10">
+                                        <Grid ColumnDefinitions="80,*,Auto">
+                                            <Border Width="80" Height="50"
+                                                    Background="{DynamicResource KrosteSurfaceBrush}"
+                                                    CornerRadius="4" ClipToBounds="True">
+                                                <Image controls:UrlImageBehavior.Url="{Binding PreviewUrl}"
+                                                       Stretch="UniformToFill" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Author}" Classes="muted" FontSize="11" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Classes="ghost" Content="🌐"
+                                                    ToolTip.Tip="{loc:Tr ModDetail_OpenInBrowser}"
+                                                    Command="{Binding $parent[Window].((vm:ModDetailViewModel)DataContext).OpenSimilarInBrowserCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
             </StackPanel>

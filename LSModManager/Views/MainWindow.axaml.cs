@@ -131,7 +131,10 @@ public partial class MainWindow : ChromeWindow
             if (App.Current is not App app || DataContext is not MainWindowViewModel main) return;
             var hub = app.Services.GetRequiredService<ModHubService>();
             var settings = app.Services.GetRequiredService<AppSettingsService>();
-            var detailVm = new ModDetailViewModel(hub, settings, main, modId.Value, item.Title);
+            var aiSettings = app.Services.GetRequiredService<Services.Ai.AiSettingsService>();
+            var aiFactory = app.Services.GetRequiredService<Services.Ai.AiProviderFactory>();
+            var detailVm = new ModDetailViewModel(
+                hub, settings, aiSettings, aiFactory, main, modId.Value, item.Title);
             var window = new ModDetailWindow(detailVm);
             _ = window.ShowDialog(this);
         }

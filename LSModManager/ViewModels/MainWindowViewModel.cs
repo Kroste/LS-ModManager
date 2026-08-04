@@ -1490,6 +1490,37 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private string? _lastCatalogLanguage;
 
+    /// <summary>
+    /// Katalog-API für das Detail-VM: Kandidaten für „Ähnliche Mods"-KI-Empfehlung.
+    /// Filter: gleiche Kategorie, nicht der aktuelle Mod selbst; max <paramref name="maxCount"/>
+    /// Einträge um den Prompt kompakt zu halten (der Rest wäre der KI eh zu viel).
+    /// </summary>
+    public IReadOnlyList<ModHubEntry> GetCatalogCandidatesForSimilar(
+        string category, string excludeDetailUrl, int maxCount = 30)
+    {
+        if (string.IsNullOrWhiteSpace(category)) return Array.Empty<ModHubEntry>();
+        lock (_catalogLock)
+        {
+            return _allCatalog
+                .Where(e => string.Equals(e.Category, category, StringComparison.OrdinalIgnoreCase))
+                .Where(e => !string.Equals(e.DetailUrl, excludeDetailUrl, StringComparison.Ordinal))
+                .Take(maxCount)
+                .ToList();
+        }
+    }
+
+    /// <summary>Mapping-Helper: KI-Antwort enthält Mod-Titel als Strings —
+    /// wir suchen die zugehörigen Katalog-Einträge zurück (Titel-Match).</summary>
+    public IReadOnlyList<ModHubEntry> FindCatalogEntriesByTitles(IEnumerable<string> titles)
+    {
+        var wanted = new HashSet<string>(titles, StringComparer.OrdinalIgnoreCase);
+        if (wanted.Count == 0) return Array.Empty<ModHubEntry>();
+        lock (_catalogLock)
+        {
+            return _allCatalog.Where(e => wanted.Contains(e.Title)).ToList();
+        }
+    }
+
     /// <summary>Nutzt das Detail-Window fürs sofortige Download-Trigger.</summary>
     public Task DownloadFromDetailAsync(int modId, string title)
     {

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LSModManager.Localization;
 using LSModManager.Services;
+using LSModManager.Services.Ai;
 using NLog;
 
 namespace LSModManager.ViewModels;
@@ -12,6 +13,12 @@ namespace LSModManager.ViewModels;
 /// ViewModel für das <see cref="Views.ModDetailWindow"/>. Lädt die Detail-Seite
 /// eines Mods vom ModHub und stellt Metadaten + Screenshots dar. Der Download
 /// selbst delegiert an das Haupt-ViewModel (persistenter Downloads-Ordner).
+///
+/// <para><b>KI-Features:</b> optional (nur wenn <see cref="AiSettings.IsEnabled"/>).
+/// „Zusammenfassen" kürzt die Beschreibung auf 3-4 Sätze, „Ähnliche Mods" nutzt
+/// die Kategorie als Filter und lässt die KI aus einer Kandidatenliste die
+/// 5 verwandtesten wählen. Beide Features sind Best-Effort — Fehler landen
+/// als StatusText, blockieren aber nicht das restliche Detail-Fenster.</para>
 /// </summary>
 public sealed partial class ModDetailViewModel : ObservableObject
 {
@@ -19,14 +26,20 @@ public sealed partial class ModDetailViewModel : ObservableObject
 
     private readonly ModHubService _hub;
     private readonly AppSettingsService _settings;
+    private readonly AiSettingsService _aiSettings;
+    private readonly AiProviderFactory _aiFactory;
     private readonly MainWindowViewModel _main;
     private readonly int _modId;
 
-    public ModDetailViewModel(ModHubService hub, AppSettingsService settings,
+    public ModDetailViewModel(
+        ModHubService hub, AppSettingsService settings,
+        AiSettingsService aiSettings, AiProviderFactory aiFactory,
         MainWindowViewModel main, int modId, string initialTitle)
     {
         _hub = hub;
         _settings = settings;
+        _aiSettings = aiSettings;
+        _aiFactory = aiFactory;
         _main = main;
         _modId = modId;
         Title = initialTitle;
@@ -52,6 +65,34 @@ public sealed partial class ModDetailViewModel : ObservableObject
     public string DetailUrl { get; private set; } = "";
 
     public ObservableCollection<string> ScreenshotUrls { get; } = new();
+
+    // ---- KI-Sektion ---------------------------------------------------------
+
+    /// <summary>True wenn im SettingsWindow ein KI-Provider ausgewählt ist —
+    /// steuert Sichtbarkeit der beiden KI-Buttons. Wird beim Init einmal
+    /// gelesen; wenn der User zwischenzeitlich Provider ändert, muss er das
+    /// Detail-Fenster neu öffnen.</summary>
+    public bool IsAiEnabled => _aiSettings.Current.IsEnabled;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SummarizeCommand))]
+    private bool _isSummarizing;
+
+    [ObservableProperty] private string _summaryText = "";
+    public bool HasSummary => !string.IsNullOrWhiteSpace(SummaryText);
+    partial void OnSummaryTextChanged(string value) => OnPropertyChanged(nameof(HasSummary));
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindSimilarModsCommand))]
+    private bool _isSearchingSimilar;
+
+    /// <summary>Von der KI vorgeschlagene ähnliche Mods (aus dem Katalog zurück-
+    /// gemappt). Card-Klick öffnet den Browser (Detail-Fenster-Kette wäre unnötige
+    /// Komplexität).</summary>
+    public ObservableCollection<ModHubItemViewModel> SimilarMods { get; } = new();
+    [ObservableProperty] private bool _similarNoResults;
+
+    // ---- Init und Basis-Commands -------------------------------------------
 
     public async Task InitializeAsync()
     {
@@ -113,6 +154,103 @@ public sealed partial class ModDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Browser nicht öffnen: {url}", DetailUrl);
+            StatusText = L.T("ModDetail_BrowserError");
+        }
+    }
+
+    // ---- Feature 1: Beschreibungs-Zusammenfassung --------------------------
+
+    [RelayCommand(CanExecute = nameof(CanSummarize))]
+    public async Task SummarizeAsync()
+    {
+        var provider = _aiFactory.Create(_aiSettings.Current);
+        if (provider is null)
+        {
+            StatusText = L.T("ModDetail_LoadFailed");
+            return;
+        }
+        try
+        {
+            IsSummarizing = true;
+            StatusText = L.T("ModDetail_AiSummarizing");
+            var response = await provider.CompleteAsync(
+                AiPromptBuilder.SummarizeSystemPrompt,
+                AiPromptBuilder.BuildSummarizeUserPrompt(Title, Description));
+            SummaryText = response;
+            StatusText = "";
+            Log.Info("KI-Zusammenfassung erstellt für {t}: {len} Zeichen", Title, response.Length);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "KI-Zusammenfassung fehlgeschlagen für {t}", Title);
+            StatusText = L.F("ModDetail_AiError", ex.Message);
+        }
+        finally { IsSummarizing = false; }
+    }
+
+    private bool CanSummarize() => IsAiEnabled && !IsSummarizing && !string.IsNullOrWhiteSpace(Description);
+
+    // ---- Feature 2: Ähnliche Mods ------------------------------------------
+
+    [RelayCommand(CanExecute = nameof(CanFindSimilar))]
+    public async Task FindSimilarModsAsync()
+    {
+        var provider = _aiFactory.Create(_aiSettings.Current);
+        if (provider is null) return;
+
+        try
+        {
+            IsSearchingSimilar = true;
+            SimilarMods.Clear();
+            SimilarNoResults = false;
+            StatusText = L.T("ModDetail_AiSimilarLoading");
+
+            var candidates = _main.GetCatalogCandidatesForSimilar(Category, DetailUrl);
+            if (candidates.Count == 0)
+            {
+                SimilarNoResults = true;
+                StatusText = "";
+                return;
+            }
+
+            var response = await provider.CompleteAsync(
+                AiPromptBuilder.SimilarModsSystemPrompt,
+                AiPromptBuilder.BuildSimilarModsUserPrompt(
+                    Title, Category, Author, candidates.Select(c => c.Title)));
+
+            var titles = AiPromptBuilder.ParseSimilarModTitles(response);
+            var matches = _main.FindCatalogEntriesByTitles(titles);
+            foreach (var m in matches) SimilarMods.Add(new ModHubItemViewModel(m));
+
+            SimilarNoResults = SimilarMods.Count == 0;
+            StatusText = "";
+            Log.Info("KI-Empfehlung: {n} ähnliche Mods für {t} (aus {c} Kandidaten)",
+                SimilarMods.Count, Title, candidates.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "KI-Empfehlung fehlgeschlagen für {t}", Title);
+            StatusText = L.F("ModDetail_AiError", ex.Message);
+        }
+        finally { IsSearchingSimilar = false; }
+    }
+
+    private bool CanFindSimilar() => IsAiEnabled && !IsSearchingSimilar && !string.IsNullOrWhiteSpace(Category);
+
+    /// <summary>Klick auf eine „Ähnliche Mods"-Card — öffnet den Browser.
+    /// Bewusst kein neues Detail-Fenster (unnötige Fenster-Kette, User kann
+    /// die Detail-URL auch selbst im Katalog suchen).</summary>
+    [RelayCommand]
+    public void OpenSimilarInBrowser(ModHubItemViewModel? item)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(item.DetailUrl)) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo(item.DetailUrl) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Konnte Browser nicht öffnen: {url}", item.DetailUrl);
             StatusText = L.T("ModDetail_BrowserError");
         }
     }

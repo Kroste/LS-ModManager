@@ -232,4 +232,12 @@
   <data name="ModDetail_Download" xml:space="preserve"><value>📥 Download</value></data>
   <data name="ModDetail_Screenshots" xml:space="preserve"><value>SCREENSHOTS</value></data>
   <data name="ModDetail_Description" xml:space="preserve"><value>DESCRIPTION</value></data>
+  <data name="ModDetail_AiSummarize" xml:space="preserve"><value>🤖 Summarize with AI</value></data>
+  <data name="ModDetail_AiSummarizing" xml:space="preserve"><value>Summarizing …</value></data>
+  <data name="ModDetail_AiSummary" xml:space="preserve"><value>AI SUMMARY</value></data>
+  <data name="ModDetail_AiSimilar" xml:space="preserve"><value>SIMILAR MODS (AI)</value></data>
+  <data name="ModDetail_AiSimilarLoad" xml:space="preserve"><value>🤖 Find similar mods</value></data>
+  <data name="ModDetail_AiSimilarLoading" xml:space="preserve"><value>Searching for similar mods …</value></data>
+  <data name="ModDetail_AiSimilarNone" xml:space="preserve"><value>No matches found.</value></data>
+  <data name="ModDetail_AiError" xml:space="preserve"><value>AI error: {0}</value></data>
 </root>
