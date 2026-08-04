@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Platform.Storage;
@@ -314,13 +315,7 @@ public partial class MainWindow : ChromeWindow
         try
         {
             var clip = TopLevel.GetTopLevel(this)?.Clipboard;
-            if (clip is null) return;
-            // Avalonia 12: IClipboard.SetTextAsync ist weg — DataTransfer + Item bauen.
-            var transfer = new DataTransfer();
-            var transferItem = new DataTransferItem();
-            transferItem.SetText(item.Model.FileName);
-            transfer.Add(transferItem);
-            await clip.SetDataAsync(transfer);
+            if (clip is not null) await clip.SetTextAsync(item.Model.FileName);
         }
         catch (Exception ex) { Log.Warn(ex, "Clipboard-Kopie fehlgeschlagen"); }
     }
