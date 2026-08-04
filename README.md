@@ -45,8 +45,10 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
 - **🖥 System-Tray:** Fenster schließen beendet, minimieren legt es ins Tray.
 - **⚙ Einstellungen:** Mod-Pfad, Katalog-Sprache (DE/EN/FR/ES/IT/PL),
   Katalog-Auto-Refresh-Intervall (1 h / 6 h / 12 h / 24 h / 7 Tage / nie).
-- **🔄 App-Update-Check:** Prüft GitHub-Releases (proxy-fähig) und meldet
-  neue Versionen.
+- **🔄 App-Selbst-Update:** Prüft GitHub-Releases (proxy-fähig). Bei neuer
+  Version im About-Dialog Klick auf „⬇ Update installieren" — die App lädt
+  das passende Paket (Windows-ZIP / Linux-AppImage / Linux-tar.gz), startet
+  einen kleinen Installer und ersetzt sich selbst.
 
 ## Installation
 
