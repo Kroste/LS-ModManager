@@ -108,16 +108,39 @@
     (Arbeitslaptop-Sophos).
 - MainWindow: Header + Toolbar-Sektionen (Spiel / Installation / System) +
   TabControl mit drei Tabs (Installiert / Mod-Katalog / Downloads) +
-  Statusbar mit Live-Progress. Toolbar hat „🚜 LS25 starten" (Steam-URI) und
-  „🔄 Updates prüfen". Card-basierter Look, kein Fluent-Grau.
-- Installed-Tab: Live-Suche oben (Titel/Autor/Filename, filtert `_allInstalled`
-  in `InstalledMods`). Multi-Selection per Ctrl-/Shift-Klick → Bulk-Toolbar
-  erscheint mit „⏻ Alle aktivieren / deaktivieren / 🗑 alle deinstallieren".
+  Statusbar. Toolbar hat „🚜 LS25 starten" (Steam-URI) und „🔄 Updates prüfen".
+  Card-basierter Look, kein Fluent-Grau. **Statusbar-Progress**: zwei
+  ProgressBars an derselben Grid-Zelle, `IsVisible` toggled zwischen
+  Indeterminate-Animation (Busy ohne Zahlwert) und Determinate mit echtem
+  0..1-Wert. Reporter setzen `ProgressValue` und räumen im finally auf null
+  zurück — sonst hängt der Balken auf 100 %. Statusbar rechts:
+  „N installiert · X,X GB aktiv" — `TotalActiveSizeText` als VM-Computed,
+  wird bei `RefreshInstalledAsync` nachnotified.
+- **`ConfirmDialog`** (`Views/ConfirmDialog.axaml.cs`): wiederverwendbarer
+  Ja/Nein-Dialog auf ChromeWindow-Basis. Statisches `ShowAsync(owner,
+  title, message) → Task<bool>` — kein DI nötig. Aktuell genutzt beim
+  Bulk-Uninstall (Toolbar-Button + Del-Shortcut).
+- Installed-Tab: Live-Suche + Sortier-Dropdown (Name/Größe/Datum/Status) +
+  Toggle „⬆ Nur mit Update" oben. `RebuildInstalledView` ist eine
+  Filter+Sort-Pipeline über LINQ (Search-Text → Update-Filter → Sort).
+  Sortier-Optionen sind `InstalledSortOption`-Records mit
+  `LocalizedString`-Wrapper — ComboBox-Text schaltet bei Sprachwechsel live
+  um ohne dass die Options-Liste neu gebaut werden muss.
+  Multi-Selection per Ctrl-/Shift-Klick → Bulk-Toolbar mit
+  „⏻ Alle aktivieren / deaktivieren / 🗑 alle deinstallieren"; Bulk-Uninstall
+  fragt vorher über `ConfirmDialog` nach (Fehlklick-Schutz).
   Card-Buttons „⏻ (De-)Aktivieren" und „🗑 Deinstallieren" pro Mod, plus
   „⬇ Update installieren" (nur sichtbar bei HasUpdate, Katalog-Match und
   Version-Diff). Update-Ablauf: Download neu → alte deinstallieren → neue
-  installieren → Enabled-State übernehmen. Doppelklick auf Katalog-Card
-  öffnet Detail-Fenster.
+  installieren → Enabled-State übernehmen. Doppelklick auf Card öffnet
+  Detail-Fenster wenn ein Katalog-Match existiert (`TryShowInstalledDetails`),
+  sonst still. Rechtsklick-`ContextMenu` pro Card: Details / Ordner im
+  Dateimanager öffnen / Filename in Zwischenablage kopieren / Deinstallieren.
+  Keyboard-Shortcuts im MainWindow-Code-Behind (nicht `Window.KeyBindings`,
+  weil Focus/Dialog View-Concern): **F5** = Refresh, **Ctrl+F** = Fokus
+  Suchfeld + SelectAll, **Del** = Bulk-Uninstall mit Dialog (nur wenn Focus
+  in der ListBox — sonst wäre das im Suchfeld ein „Zeichen löschen"-
+  Fehltritt).
 - **Drag-and-Drop**: Beliebig viele .zip-Dateien auf's Fenster droppen →
   `InstallZipsAsync` installiert sie sequentiell, überspringt Non-ZIPs und
   ungültige Mod-Archive (Log-Warnung, User sieht Count in Statusbar).
@@ -129,6 +152,16 @@
   `AppPaths.CacheRoot/catalog-<lang>.json` — beim App-Start instant geladen,
   inkrementeller Save alle 10 Seiten + im finally-Block (überlebt Crash /
   Close). Card-Buttons „📥 Herunterladen" und „👁 Details" (in-app).
+  **„NEU"-Badge:** Sidecar-Datei `catalog-<lang>-seen.txt` speichert die
+  DetailUrls vom vorherigen App-Start (Textformat, eine URL pro Zeile —
+  kürzer und diff-freundlicher als JSON). Beim aktuellen Start wird der
+  Katalog dagegen gediffed, neue Einträge bekommen `IsNew=true` und ein
+  grünes NEU-Badge. `SaveSeenSnapshot(lang)` läuft nach initialem Cache-Load
+  UND am Ende des Full-Loads (`LoadAllRemainingPagesAsync`.finally) — sonst
+  würden nach einem Refresh die neu geladenen Einträge beim nächsten Start
+  fälschlich noch mal als „neu" markiert. Erst-Start ohne Sidecar-Datei:
+  `_previousSeenUrls` ist null → `IsEntryNew` liefert immer false, kein
+  Badge-Flood.
 - Downloads-Tab: Alle heruntergeladenen ZIPs aus dem persistenten
   `AppPaths.DownloadsDir` (LocalAppData/cache/downloads bzw. XDG_CACHE). Pro
   Card „📥 Installieren" (kopiert in Mod-Ordner) und „🗑 Löschen".

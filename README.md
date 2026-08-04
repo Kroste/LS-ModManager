@@ -50,6 +50,22 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
   deaktivierte Mods + Enabled-States) als selbstenthaltenes ZIP exportieren
   und auf einem anderen Rechner oder nach einem Neuaufsetzen wiederherstellen.
   Ideal für Sync zwischen mehreren Rechnern oder als Snapshot pro Karriere.
+- **🆕 „NEU"-Badge im Katalog:** Einträge die beim letzten App-Start noch
+  nicht im Katalog waren, bekommen einen grünen Marker auf der Card —
+  einfacher Überblick was Community und ModHub seit dem letzten Besuch
+  ergänzt haben.
+- **🧰 Alltags-Komfort:**
+  - Rechtsklick auf jede Installiert-Card: Details / Ordner im Dateimanager
+    öffnen / Filename kopieren / Deinstallieren.
+  - Sortierung (Name / Größe / Datum / Status) und Filter „nur mit Update"
+    im Installiert-Tab.
+  - Statusbar zeigt Gesamtgröße der aktiven Mods („12,3 GB aktiv") und
+    echten Prozent-Fortschritt bei Downloads/Backup/Restore.
+  - Doppelklick auf Installiert-Card öffnet das Detail-Fenster (wenn
+    Katalog-Match vorhanden).
+  - Keyboard-Shortcuts: **F5** = neu laden, **Ctrl+F** = Fokus Suchfeld,
+    **Del** = markierte Mods deinstallieren (mit Rückfrage).
+  - Bulk-Deinstallation fragt vor dem Löschen nach.
 - **🇩🇪🇬🇧 Zweisprachige App-UI (Deutsch + Englisch):** Sprachauswahl im
   Einstellungen-Fenster mit Länderflaggen, Live-Umschaltung im Betrieb ohne
   Neustart. Community-Beiträge für weitere Sprachen willkommen (siehe
