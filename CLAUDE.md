@@ -53,8 +53,18 @@
     `Referer`-Header setzen** — GIANTS-CDN blockt sonst mit HTTP 403 (auch für
     Preview-Bilder!). Der `UrlImageBehavior` und der `_http` im Service haben
     beide `Referer: https://www.farming-simulator.com/` als Default.
-  - `UpdateService`: GitHub-Releases-API-Check (proxy-aware), noch kein
-    Self-Update (Phase 2 laut references/autoupdate.md).
+  - `UpdateService`: GitHub-Releases-API-Check + **echtes Self-Update**.
+    Plattform-Detection (Win-ZIP, Linux-AppImage, Linux-tar.gz), Asset-Wahl
+    aus dem Release-JSON, Download mit Progress in
+    `%LOCALAPPDATA%\LSModManager\update\` bzw. `$XDG_STATE_HOME/LSModManager/update/`
+    (NIE `AppContext.BaseDirectory` — AppImage-Squashfs ist read-only, siehe
+    references/autoupdate.md Falle 2). Installer-Skripte werden on-the-fly
+    geschrieben: `install.bat` mit `Wait-Process` + `xcopy` (Windows),
+    `install-appimage.sh` mit `kill -0` + `cp -f` + `setsid` (AppImage,
+    Inode-stabiler In-Place-Replace), `install-tarball.sh` mit `tar -xzf` +
+    `chmod +x`. Nach Skript-Start `Environment.Exit(0)` + Kill-Fallback
+    nach 1,5 s. Proxy-aware via `WebRequest.DefaultWebProxy`
+    (Arbeitslaptop-Sophos).
 - MainWindow: Header + Toolbar-Sektionen (Spiel / Installation / System) +
   TabControl mit drei Tabs (Installiert / ModHub-Katalog / Downloads) +
   Statusbar mit Live-Progress. Toolbar hat „🚜 LS25 starten" (Steam-URI) und
@@ -87,6 +97,9 @@
 - SettingsWindow: Mod-Pfad (Auto-Detect + manueller Override mit Folder-Picker)
   + Katalog-Sprache (ComboBox).
 - AboutWindow: Version, GitHub-Link, BMC-Link, „Auf Updates prüfen"-Button.
+  Bei verfügbarem Update + passendem Plattform-Asset erscheint zusätzlich
+  „⬇ Update auf vX installieren" mit Progress-Bar; nach Klick lädt die App
+  das Asset, startet den Installer und beendet sich selbst.
 - Tests: xunit.v3 — `ModDescReaderTests` (ZIP-Parsing, Sprach-Fallback,
   Preview-Extraktion), `ModHubServiceTests` (URL-Builder, HTML-Parser),
   `ModPathServiceTests` (Plattform-Kandidaten).
@@ -97,10 +110,7 @@
   - _(alle Quick-Wins der letzten Runde erledigt — Update-Install, DnD,
     Installed-Suche, .broken-Backup, Bulk-Aktionen)_
 
-- **Mittelfristig (Kroste-Standard-Pflichten + solide Ergänzungen):**
-  - **Vollständiges Self-Update** nach `references/autoupdate.md`
-    (Windows-ZIP-Install-Batch, AppImage-Ersetzung, tar.gz-Rebuild). Aktuell
-    haben wir nur den Check — reine Notification ist gegen den Kroste-Standard.
+- **Mittelfristig:**
   - **Backup/Restore der Mod-Konfiguration** (ZIP mit aktiven Mods + Meta).
 - **Groß (mehrere Runden):**
   - **Multi-Profile** (Karriere-abhängige Mod-Sets).
