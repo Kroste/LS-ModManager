@@ -169,6 +169,16 @@
   <data name="Settings_Catalog_AutoRefresh" xml:space="preserve"><value>Katalog-Cache automatisch aktualisieren</value></data>
   <data name="Settings_Catalog_AutoRefreshHint" xml:space="preserve"><value>Beim Start wird der Cache neu geladen, wenn er älter als die eingestellte Zeit ist. „↺“ im Katalog-Tab erzwingt manuell einen Refresh.</value></data>
 
+  <data name="Settings_Section_Ai" xml:space="preserve"><value>KI-Integration</value></data>
+  <data name="Settings_Ai_Description" xml:space="preserve"><value>Optionale KI-Features für Beschreibungs-Zusammenfassung und „Ähnliche Mods"-Empfehlungen. Ollama (lokal) ist die datenschutzfreundliche Default-Option; Cloud-Anbieter brauchen einen API-Key.</value></data>
+  <data name="Settings_Ai_Provider" xml:space="preserve"><value>Anbieter</value></data>
+  <data name="Settings_Ai_Endpoint" xml:space="preserve"><value>Endpoint</value></data>
+  <data name="Settings_Ai_Model" xml:space="preserve"><value>Modell</value></data>
+  <data name="Settings_Ai_ApiKey" xml:space="preserve"><value>API-Key</value></data>
+  <data name="Settings_Ai_TestConnection" xml:space="preserve"><value>Verbindung testen</value></data>
+  <data name="Settings_Ai_OllamaRecommendedModels" xml:space="preserve"><value>Empfohlenes Ollama-Modell herunterladen</value></data>
+  <data name="Settings_Ai_OllamaDownload" xml:space="preserve"><value>⬇ Herunterladen</value></data>
+
   <data name="About_Description" xml:space="preserve"><value>Mod-Manager für Landwirtschaftssimulator 25 (Windows / Linux).</value></data>
   <data name="About_VersionPrefix" xml:space="preserve"><value>Version </value></data>
   <data name="About_CheckUpdates" xml:space="preserve"><value>Auf Updates prüfen</value></data>

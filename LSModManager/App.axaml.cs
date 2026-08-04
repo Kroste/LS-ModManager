@@ -72,6 +72,16 @@ public partial class App : Application
         services.AddSingleton<ModInstallService>();
         services.AddSingleton<ModBackupService>();
         services.AddSingleton<ModHubService>();
+
+        // KI-Integration (Kroste-Baukasten): AiSettingsService hält die
+        // persistente Provider-Config (Ollama/Anthropic/OpenAI/Gemini/Mistral/
+        // OpenAI-kompatibel); AiProviderFactory bildet daraus zur Laufzeit den
+        // passenden IAiProvider. AddHttpClient() registriert die IHttpClientFactory,
+        // die die Provider intern für ihre Requests nutzen (Kanal „ai" für
+        // Completions, „ai-pull" für Ollama-Modell-Downloads).
+        services.AddSingleton<Services.Ai.AiSettingsService>();
+        services.AddSingleton<Services.Ai.AiProviderFactory>();
+        services.AddHttpClient();
         services.AddSingleton<ModhosterCatalogService>();
         services.AddSingleton<HofHirschfeldCatalogService>();
         services.AddSingleton<UpdateService>();

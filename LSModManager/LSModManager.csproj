@@ -24,6 +24,8 @@
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Pfim" />
     <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">

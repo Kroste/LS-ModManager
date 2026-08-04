@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using LSModManager.Services.Ai;
 using LSModManager.ViewModels;
 using NLog;
 
@@ -13,6 +14,26 @@ public partial class SettingsWindow : ChromeWindow
     public SettingsWindow()
     {
         InitializeComponent();
+        // VM-Event → tatsächliches Fenster (VM darf keine Views instanziieren).
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is SettingsWindowViewModel vm)
+                vm.OllamaPullRequested += OnOllamaPullRequested;
+        };
+    }
+
+    private async void OnOllamaPullRequested(OllamaProvider provider, string modelName)
+    {
+        try
+        {
+            var pullVm = new OllamaPullViewModel(provider, modelName);
+            var window = new OllamaPullWindow { DataContext = pullVm };
+            await window.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Ollama-Pull-Fenster konnte nicht geöffnet werden");
+        }
     }
 
     private async void OnBrowseClick(object? sender, RoutedEventArgs e)

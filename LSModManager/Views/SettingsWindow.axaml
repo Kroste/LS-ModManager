@@ -81,6 +81,67 @@
 
                 <Border Classes="card">
                     <StackPanel Spacing="8">
+                        <TextBlock Classes="h2" Text="{loc:Tr Settings_Section_Ai}" />
+                        <TextBlock Classes="muted" FontSize="12" TextWrapping="Wrap"
+                                   Text="{loc:Tr Settings_Ai_Description}" />
+
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{loc:Tr Settings_Ai_Provider}" Classes="section-label" />
+                            <ComboBox ItemsSource="{Binding AiProviders}"
+                                      SelectedItem="{Binding AiProvider}"
+                                      Width="240" HorizontalAlignment="Left" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2" IsVisible="{Binding IsAiConfigured}">
+                            <TextBlock Text="{loc:Tr Settings_Ai_Endpoint}" Classes="section-label" />
+                            <TextBox Text="{Binding AiEndpoint}" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2" IsVisible="{Binding IsAiConfigured}">
+                            <TextBlock Text="{loc:Tr Settings_Ai_Model}" Classes="section-label" />
+                            <TextBox Text="{Binding AiModel}" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2" IsVisible="{Binding NeedsApiKey}">
+                            <TextBlock Text="{loc:Tr Settings_Ai_ApiKey}" Classes="section-label" />
+                            <TextBox Text="{Binding AiApiKey}" PasswordChar="•" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2" IsVisible="{Binding IsOllamaProvider}">
+                            <TextBlock Text="{loc:Tr Settings_Ai_OllamaRecommendedModels}" Classes="section-label" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                <ComboBox Grid.Column="0"
+                                          ItemsSource="{Binding RecommendedOllamaModels}"
+                                          SelectedItem="{Binding SelectedRecommendedOllamaModel}"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding Name}" FontFamily="monospace" />
+                                                <TextBlock Text="{Binding ApproxSize}" Classes="muted" />
+                                                <TextBlock Text="{Binding Description}" Classes="secondary" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Grid.Column="1" Classes="accent"
+                                        Content="{loc:Tr Settings_Ai_OllamaDownload}"
+                                        Command="{Binding PullRecommendedOllamaModelCommand}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0"
+                                    IsVisible="{Binding IsAiConfigured}">
+                            <Button Content="{loc:Tr Settings_Ai_TestConnection}"
+                                    Command="{Binding TestAiConnectionCommand}" />
+                            <TextBlock Text="{Binding AiTestResult}" VerticalAlignment="Center"
+                                       Classes="secondary" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
                         <TextBlock Classes="h2" Text="{loc:Tr Settings_Section_Catalog}" />
                         <TextBlock Classes="muted" FontSize="12"
                                    Text="{loc:Tr Settings_Catalog_Description}" />

@@ -197,6 +197,17 @@
   <data name="Settings_Catalog_AutoRefresh" xml:space="preserve"><value>Auto-refresh catalog cache</value></data>
   <data name="Settings_Catalog_AutoRefreshHint" xml:space="preserve"><value>On startup the cache is reloaded if it is older than the configured age. „↺“ in the catalog tab always forces a manual refresh.</value></data>
 
+  <!-- ============ Settings: AI integration ============ -->
+  <data name="Settings_Section_Ai" xml:space="preserve"><value>AI integration</value></data>
+  <data name="Settings_Ai_Description" xml:space="preserve"><value>Optional AI features for description summaries and „similar mods" recommendations. Ollama (local) is the privacy-friendly default; cloud providers need an API key.</value></data>
+  <data name="Settings_Ai_Provider" xml:space="preserve"><value>Provider</value></data>
+  <data name="Settings_Ai_Endpoint" xml:space="preserve"><value>Endpoint</value></data>
+  <data name="Settings_Ai_Model" xml:space="preserve"><value>Model</value></data>
+  <data name="Settings_Ai_ApiKey" xml:space="preserve"><value>API key</value></data>
+  <data name="Settings_Ai_TestConnection" xml:space="preserve"><value>Test connection</value></data>
+  <data name="Settings_Ai_OllamaRecommendedModels" xml:space="preserve"><value>Download recommended Ollama model</value></data>
+  <data name="Settings_Ai_OllamaDownload" xml:space="preserve"><value>⬇ Download</value></data>
+
   <!-- ============ About window ============ -->
   <data name="About_Description" xml:space="preserve"><value>Mod manager for Farming Simulator 25 (Windows / Linux).</value></data>
   <data name="About_VersionPrefix" xml:space="preserve"><value>Version </value></data>

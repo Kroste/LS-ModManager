@@ -30,6 +30,13 @@
     <PackageVersion Include="Pfim" Version="0.11.3" />
     <PackageVersion Include="SkiaSharp" Version="3.119.4" />
 
+    <!-- KI-Integration nach Kroste-Baukasten (Ollama/Anthropic/OpenAI/Gemini/
+         OpenAI-kompatibel). Http-Factory für Provider-HttpClients,
+         ProtectedData für Windows-DPAPI (Linux nutzt eigenen AES-Fallback,
+         siehe SecretProtection). Versionen kompatibel mit .NET 10. -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.10" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+
     <!-- Tests: xunit.v3 (NICHT das alte "xunit"-Paket); FluentAssertions unter 8 (Lizenz) -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
