@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Platform.Storage;
 using LSModManager.Localization;
 using LSModManager.Services;
@@ -28,6 +29,48 @@ public partial class MainWindow : ChromeWindow
         // Drag-and-Drop von Mod-ZIPs auf's ganze Fenster.
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
+        // Keyboard-Shortcuts (Handler unten).
+        KeyDown += OnMainKeyDown;
+    }
+
+    private async void OnMainKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+
+        // Ctrl+F: Fokus auf's Installiert-Suchfeld. TextBox darf auch aktiv sein —
+        // wir überschreiben deren Text nicht, sondern selektieren nur.
+        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
+        {
+            InstalledSearchBox?.Focus();
+            InstalledSearchBox?.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        // F5: Installierte Mods neu laden. Wenn ein TextBox den Fokus hat, ist
+        // F5 dort nicht belegt — also frei nutzbar.
+        if (e.Key == Key.F5)
+        {
+            if (vm.RefreshInstalledCommand.CanExecute(null))
+                vm.RefreshInstalledCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        // Delete: markierte Mods deinstallieren, mit Bestätigungsdialog.
+        // Nur greifen wenn der Focus auf der ListBox liegt — sonst wäre das im
+        // Suchfeld ein zerstörerischer Fehltritt (User will „Zeichen löschen").
+        if (e.Key == Key.Delete && FocusManager?.GetFocusedElement() is Control focused &&
+            (focused == InstalledList || focused.FindLogicalAncestorOfType<ListBox>() == InstalledList))
+        {
+            var items = InstalledList?.SelectedItems?.OfType<InstalledModItemViewModel>().ToList();
+            if (items is null || items.Count == 0) return;
+            var confirmed = await ConfirmDialog.ShowAsync(this,
+                L.T("Confirm_BulkUninstall_Title"),
+                L.F("Confirm_BulkUninstall_Message", items.Count));
+            if (confirmed) await vm.BulkUninstallAsync(items);
+            e.Handled = true;
+        }
     }
 
     private static void OnDragOver(object? sender, DragEventArgs e)
@@ -232,5 +275,63 @@ public partial class MainWindow : ChromeWindow
             .ToList();
         if (items.Count == 0) return;
         await action(items);
+    }
+
+    // ---- Rechtsklick-Menü auf Installiert-Cards ----
+    //
+    // Die MenuItem.DataContext-Kette: MenuItem → ContextMenu → PlacementTarget
+    // (das ist die Card-Border) → deren DataContext = InstalledModItemViewModel.
+    // Wir ziehen den DataContext deshalb aus dem sender-MenuItem.DataContext
+    // (Avalonia setzt ihn dort korrekt).
+
+    private static InstalledModItemViewModel? ItemFromMenu(object? sender) =>
+        (sender as Control)?.DataContext as InstalledModItemViewModel;
+
+    private void OnContextDetails(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.TryShowInstalledDetails(ItemFromMenu(sender));
+    }
+
+    private void OnContextOpenFolder(object? sender, RoutedEventArgs e)
+    {
+        var item = ItemFromMenu(sender);
+        if (item is null) return;
+        try
+        {
+            var folder = System.IO.Path.GetDirectoryName(item.Model.FilePath);
+            if (string.IsNullOrEmpty(folder)) return;
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder)
+                { UseShellExecute = true });
+        }
+        catch (Exception ex) { Log.Warn(ex, "Konnte Mod-Ordner nicht öffnen"); }
+    }
+
+    private async void OnContextCopyFilename(object? sender, RoutedEventArgs e)
+    {
+        var item = ItemFromMenu(sender);
+        if (item is null) return;
+        try
+        {
+            var clip = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clip is null) return;
+            // Avalonia 12: IClipboard.SetTextAsync ist weg — DataTransfer + Item bauen.
+            var transfer = new DataTransfer();
+            var transferItem = new DataTransferItem();
+            transferItem.SetText(item.Model.FileName);
+            transfer.Add(transferItem);
+            await clip.SetDataAsync(transfer);
+        }
+        catch (Exception ex) { Log.Warn(ex, "Clipboard-Kopie fehlgeschlagen"); }
+    }
+
+    private async void OnContextUninstall(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var item = ItemFromMenu(sender);
+        if (item is null) return;
+        // Einzel-Uninstall bekommt keinen Dialog — ist eine Kartenweise
+        // gezielte Aktion, kein Bulk-Missklick-Risiko wie „Alle deinstallieren".
+        await vm.UninstallAsync(item);
     }
 }

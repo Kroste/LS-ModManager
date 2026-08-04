@@ -190,6 +190,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ? L.T("ModPath_NotFound")
         : L.T("ModPath_Found");
 
+    /// <summary>
+    /// Gesamtgröße aller aktivierten Mods (formatiert als MB/GB). Wird in der
+    /// Statusbar rechts neben dem Zähler angezeigt — LS25 hat ein weiches Limit
+    /// bei ~30 GB Mod-Volumen, da hilft die Zahl beim Ausmisten.
+    /// </summary>
+    public string TotalActiveSizeText
+    {
+        get
+        {
+            long bytes = 0;
+            foreach (var m in _allInstalled)
+                if (m.Model.IsEnabled) bytes += m.Model.FileSizeBytes;
+            return FormatSize(bytes);
+        }
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024L * 1024) return $"{bytes / 1024d:F0} KB";
+        if (bytes < 1024L * 1024 * 1024) return $"{bytes / (1024d * 1024d):F1} MB";
+        return $"{bytes / (1024d * 1024d * 1024d):F2} GB";
+    }
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshInstalledCommand))]
     [NotifyCanExecuteChangedFor(nameof(RefreshCatalogCommand))]
@@ -313,6 +336,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             foreach (var m in list) _allInstalled.Add(new InstalledModItemViewModel(m));
             RebuildInstalledView();
             StatusText = L.F("Status_InstalledCount", _allInstalled.Count);
+            OnPropertyChanged(nameof(TotalActiveSizeText));
             Log.Info("Installierte Mods aktualisiert: {n}", _allInstalled.Count);
             _ = BackfillCoversAsync(_allInstalled, isInstalled: true);
         }

@@ -103,6 +103,12 @@
   <data name="Main_Backup" xml:space="preserve"><value>💾 Backup</value></data>
   <data name="Main_Restore" xml:space="preserve"><value>📂 Restore</value></data>
   <data name="Statusbar_InstalledCountSuffix" xml:space="preserve"><value>installiert</value></data>
+  <data name="Statusbar_ActiveSizeSuffix" xml:space="preserve"><value>aktiv</value></data>
+
+  <data name="Context_Details" xml:space="preserve"><value>👁 Details</value></data>
+  <data name="Context_OpenFolder" xml:space="preserve"><value>📁 Im Dateimanager öffnen</value></data>
+  <data name="Context_CopyFilename" xml:space="preserve"><value>📋 Dateiname kopieren</value></data>
+  <data name="Context_Uninstall" xml:space="preserve"><value>🗑 Deinstallieren</value></data>
 
   <data name="Tab_Installed" xml:space="preserve"><value>📦 Installiert</value></data>
   <data name="Tab_Catalog" xml:space="preserve"><value>🌐 Mod-Katalog</value></data>

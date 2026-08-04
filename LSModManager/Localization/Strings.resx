@@ -125,6 +125,13 @@
     Sprachwechsel automatisch funktional. Kein L.F-VM-Property nötig.
   -->
   <data name="Statusbar_InstalledCountSuffix" xml:space="preserve"><value>installed</value></data>
+  <data name="Statusbar_ActiveSizeSuffix" xml:space="preserve"><value>active</value></data>
+
+  <!-- ============ Context menu on installed cards ============ -->
+  <data name="Context_Details" xml:space="preserve"><value>👁 Details</value></data>
+  <data name="Context_OpenFolder" xml:space="preserve"><value>📁 Open in file manager</value></data>
+  <data name="Context_CopyFilename" xml:space="preserve"><value>📋 Copy filename</value></data>
+  <data name="Context_Uninstall" xml:space="preserve"><value>🗑 Uninstall</value></data>
 
   <!-- ============ Tabs ============ -->
   <data name="Tab_Installed" xml:space="preserve"><value>📦 Installed</value></data>

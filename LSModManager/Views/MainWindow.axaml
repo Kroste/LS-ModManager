@@ -16,6 +16,11 @@
         Background="{DynamicResource KrosteBackgroundBrush}"
         DragDrop.AllowDrop="True">
 
+    <!-- Keyboard-Shortcuts werden im Code-Behind (OnKeyDown) behandelt —
+         F5 = Refresh, Ctrl+F = Fokus Installiert-Suche, Del = Bulk-Uninstall
+         mit Dialog. Über KeyBindings statt Code-Behind ist umständlich, weil
+         Focus-Setzen und Dialoge im View-Concern liegen. -->
+
     <DockPanel>
         <controls:TitleBar DockPanel.Dock="Top" Title="{loc:Tr Window_Main}" />
 
@@ -99,13 +104,18 @@
                              Value="{Binding ProgressValue, FallbackValue=0}"
                              Width="120" Margin="12,0"
                              IsVisible="{Binding HasProgressValue}" />
-                <!-- Zähler-Suffix: Zahl aus Binding + statischer Suffix aus {loc:Tr} —
-                     so bleibt Live-Sprachwechsel funktional ohne VM-Notify-Handler. -->
+                <!-- Zähler-Suffix + Gesamtgröße aktiver Mods. Zahl aus Binding,
+                     Text aus {loc:Tr} — Live-Sprachwechsel funktioniert automatisch. -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                     <TextBlock Classes="muted" VerticalAlignment="Center"
                                Text="{Binding InstalledMods.Count}" />
                     <TextBlock Classes="muted" VerticalAlignment="Center"
                                Text="{loc:Tr Statusbar_InstalledCountSuffix}" />
+                    <TextBlock Classes="muted" VerticalAlignment="Center" Text="·" Margin="4,0" />
+                    <TextBlock Classes="muted" VerticalAlignment="Center"
+                               Text="{Binding TotalActiveSizeText}" />
+                    <TextBlock Classes="muted" VerticalAlignment="Center"
+                               Text="{loc:Tr Statusbar_ActiveSizeSuffix}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -121,7 +131,7 @@
                              Suche nimmt den vollen Rest, Sort und Filter sind Auto-Width. -->
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto"
                               Margin="14,10,14,6" ColumnSpacing="8">
-                            <TextBox Grid.Column="0"
+                            <TextBox Grid.Column="0" x:Name="InstalledSearchBox"
                                      Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
                                      PlaceholderText="{loc:Tr Installed_SearchPlaceholder}" />
                             <ToggleButton Grid.Column="1"
@@ -165,6 +175,19 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="vm:InstalledModItemViewModel">
                                 <Border Classes="card" Margin="0,0,0,8" Padding="12">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{loc:Tr Context_Details}"
+                                                      Click="OnContextDetails" />
+                                            <MenuItem Header="{loc:Tr Context_OpenFolder}"
+                                                      Click="OnContextOpenFolder" />
+                                            <MenuItem Header="{loc:Tr Context_CopyFilename}"
+                                                      Click="OnContextCopyFilename" />
+                                            <Separator />
+                                            <MenuItem Header="{loc:Tr Context_Uninstall}"
+                                                      Click="OnContextUninstall" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <Grid ColumnDefinitions="112,*,Auto">
                                         <Border Width="112" Height="96"
                                                 Background="{DynamicResource KrosteSurfaceBrush}"
