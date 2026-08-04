@@ -39,9 +39,17 @@ public sealed class ModPathServiceTests : IDisposable
 
         if (OperatingSystem.IsLinux())
         {
-            // Neu: sowohl "Documents" als auch "My Documents" müssen probiert werden
-            candidates.Should().Contain(c => c.Contains(Path.Combine("steamuser", "My Documents")));
-            candidates.Should().Contain(c => c.Contains(Path.Combine("steamuser", "Documents")));
+            // Steam-Präfix-Kandidaten entstehen nur, wenn Steam auf dem Runner
+            // installiert ist. CI-Runner haben kein Steam — dann testen wir nur
+            // die generellen Home-Kandidaten. Auf Dev-Systemen mit Steam prüfen
+            // wir dass BEIDE Documents-Ordnernamen (XP-Style + Standard) rauskommen.
+            var steamCandidates = candidates.Where(c => c.Contains("compatdata")).ToList();
+            if (steamCandidates.Any())
+            {
+                steamCandidates.Should().Contain(c => c.Contains(Path.Combine("steamuser", "My Documents")));
+                steamCandidates.Should().Contain(c => c.Contains(Path.Combine("steamuser", "Documents")));
+            }
+            candidates.Should().Contain(c => c.Contains(".local/share/FarmingSimulator2025"));
         }
         if (OperatingSystem.IsWindows())
             candidates.Should().Contain(c => c.Contains("My Games"));
