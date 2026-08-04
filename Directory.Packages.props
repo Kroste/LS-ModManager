@@ -21,7 +21,7 @@
     <PackageVersion Include="MinVer" Version="7.0.0" />
 
     <!-- HTML-Parser für ModHub-Katalog (MS-PL, ok) -->
-    <PackageVersion Include="HtmlAgilityPack" Version="1.11.72" />
+    <PackageVersion Include="HtmlAgilityPack" Version="1.12.4" />
 
     <!-- DDS-Decoder für Mod-Icons (BC1/BC3/RGBA). Pfim = pure C#, MIT.
          SkiaSharp = PNG-Encoder für die dekodierten Roh-Pixel; nativ enthalten
