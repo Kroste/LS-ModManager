@@ -165,6 +165,7 @@
   <data name="Catalog_Download" xml:space="preserve"><value>📥 Download</value></data>
   <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Open</value></data>
   <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
+  <data name="Catalog_NewBadge" xml:space="preserve"><value>NEW</value></data>
 
   <!-- ============ Downloads tab ============ -->
   <data name="Downloads_Info" xml:space="preserve"><value>Downloaded but not installed. Install copies the ZIP into your LS25 mod folder.</value></data>

@@ -6,9 +6,18 @@ namespace LSModManager.ViewModels;
 /// <summary>UI-Adapter für einen ModHub-Katalog-Eintrag. Preview wird lazy per Bindung geladen.</summary>
 public sealed class ModHubItemViewModel : ObservableObject
 {
-    public ModHubItemViewModel(ModHubEntry entry) => Model = entry;
+    public ModHubItemViewModel(ModHubEntry entry, bool isNew = false)
+    {
+        Model = entry;
+        IsNew = isNew;
+    }
 
     public ModHubEntry Model { get; }
+
+    /// <summary>True wenn dieser Eintrag beim vorherigen App-Start noch nicht im
+    /// Katalog war (Diff über CatalogCache.LoadSeenSnapshot). Steuert das
+    /// „NEU"-Badge auf der Card.</summary>
+    public bool IsNew { get; }
     public string Title => Model.Title;
     public string Author => Model.Author;
     public string Category => Model.Category;

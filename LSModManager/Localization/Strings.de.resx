@@ -139,6 +139,7 @@
   <data name="Catalog_Download" xml:space="preserve"><value>📥 Herunterladen</value></data>
   <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Öffnen</value></data>
   <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
+  <data name="Catalog_NewBadge" xml:space="preserve"><value>NEU</value></data>
 
   <data name="Downloads_Info" xml:space="preserve"><value>Fertig heruntergeladen, noch nicht installiert. Klick auf Installieren kopiert die ZIP in den LS25-Mod-Ordner.</value></data>
   <data name="Downloads_OpenFolder" xml:space="preserve"><value>📁 Ordner</value></data>

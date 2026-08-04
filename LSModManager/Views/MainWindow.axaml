@@ -314,6 +314,14 @@
                                             <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                    <!-- „NEU"-Badge: Eintrag war beim letzten App-Start noch nicht im Katalog. -->
+                                                    <Border Background="{DynamicResource LsFarmingGreenBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsNew}">
+                                                        <TextBlock Text="{loc:Tr Catalog_NewBadge}" FontSize="10"
+                                                                   FontWeight="SemiBold" Foreground="White" />
+                                                    </Border>
                                                     <Border Background="{DynamicResource KrosteAccentSoftBrush}"
                                                             CornerRadius="10" Padding="8,1"
                                                             VerticalAlignment="Center"

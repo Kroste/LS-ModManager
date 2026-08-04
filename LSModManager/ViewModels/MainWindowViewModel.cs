@@ -37,6 +37,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool _catalogReachedEnd;
     private CancellationTokenSource? _fullLoadCts;
 
+    // Snapshot der DetailUrls die beim VORHERIGEN App-Start bekannt waren —
+    // Vergleichsbasis für das „NEU"-Badge im Katalog. null solange nicht geladen
+    // (oder wenn es keine Vorgänger-Datei gibt → Erst-Start, alles gilt als
+    // gesehen und nichts wird markiert).
+    private HashSet<string>? _previousSeenUrls;
+
     public MainWindowViewModel(
         ModInstallService install,
         ModBackupService backup,
@@ -106,6 +112,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void LoadCatalogFromCacheOrRefresh()
     {
         var lang = _settings.Current.CatalogLanguage ?? "de";
+        // Seen-Snapshot IMMER laden, egal ob wir cached oder frisch starten —
+        // Vergleichsbasis für „NEU"-Badge in beiden Pfaden.
+        _previousSeenUrls = CatalogCache.LoadSeenSnapshot(lang);
+
         var cached = CatalogCache.Load(lang);
         var maxAge = TimeSpan.FromHours(Math.Max(0, _settings.Current.CatalogRefreshHours));
         var cacheStale = cached is null
@@ -128,6 +138,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _catalogReachedEnd = true; // Cache ist vollständig — kein Auto-Load.
         }
         RebuildCatalogView();
+        // Nach dem initialen Load: aktuellen Snapshot als neue Baseline
+        // festhalten. Beim NÄCHSTEN App-Start sieht der User dann als „neu"
+        // was zwischenzeitlich reingekommen ist.
+        SaveSeenSnapshot(lang);
         var age = DateTime.UtcNow - cached.SavedUtc;
         var ageText = age.TotalHours < 1
             ? $"{age.TotalMinutes:F0} min"
@@ -1116,6 +1130,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // Auch bei Cancellation/Fehler: den bisher gesammelten Stand cachen —
             // besser einen Teilcache als beim nächsten Start alles neu laden.
             SaveCatalogSnapshot(lang);
+            // Und den Seen-Snapshot mitziehen — was der User nach dem Full-Load
+            // gerade in der Karte sieht, gilt beim nächsten Start als „bekannt",
+            // nicht als „neu". Sonst würden alle Full-Load-Refresh-Einträge beim
+            // nächsten Öffnen fälschlich als NEU markiert.
+            SaveSeenSnapshot(lang);
         }
     }
 
@@ -1267,14 +1286,35 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         CatalogMods.Clear();
         foreach (var e in snapshot.Where(MatchesFilter))
-            CatalogMods.Add(new ModHubItemViewModel(e));
+            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
     }
 
     /// <summary>Nur die neuen Einträge anhängen — für den Background-Full-Load.</summary>
     private void AppendToCatalogView(IEnumerable<ModHubEntry> entries)
     {
         foreach (var e in entries.Where(MatchesFilter))
-            CatalogMods.Add(new ModHubItemViewModel(e));
+            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
+    }
+
+    /// <summary>True wenn der Eintrag beim vorherigen App-Start noch nicht im
+    /// Katalog war (Diff gegen <see cref="_previousSeenUrls"/>). Beim Erst-Start
+    /// (kein Vorgänger-Snapshot) ist NICHTS neu — sonst wäre die Card-Liste
+    /// beim ersten Öffnen komplett voll mit „NEU"-Badges, was den Sinn zerstört.</summary>
+    private bool IsEntryNew(ModHubEntry entry) =>
+        _previousSeenUrls is { } prev && !prev.Contains(entry.DetailUrl);
+
+    /// <summary>Schreibt die aktuell bekannten DetailUrls als neuen Seen-Snapshot.
+    /// Beim nächsten App-Start ist damit „alles was der User jetzt sieht" die
+    /// Vergleichs-Baseline für neue Einträge. Best-effort, Fehler nur ins Log.</summary>
+    private void SaveSeenSnapshot(string language)
+    {
+        try
+        {
+            List<string> urls;
+            lock (_catalogLock) { urls = _allCatalog.Select(e => e.DetailUrl).ToList(); }
+            if (urls.Count > 0) CatalogCache.SaveSeenSnapshot(urls, language);
+        }
+        catch (Exception ex) { Log.Warn(ex, "Seen-Snapshot-Save fehlgeschlagen"); }
     }
 
     private bool MatchesFilter(ModHubEntry e)
