@@ -14,20 +14,19 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
 - **📦 Mods installieren:** ZIP auswählen oder direkt aus dem ModHub-Katalog
   herunterladen — die App kopiert die Datei in den korrekten LS25-Mod-Ordner
   und liest Titel/Autor/Version/Beschreibung aus der `modDesc.xml`.
-- **🌐 Drei Katalog-Quellen in einem Tab:** Der offizielle GIANTS-Katalog von
-  [farming-simulator.com/mods.php](https://www.farming-simulator.com/mods.php)
-  (~4800 Mods) **plus** der Community-Katalog von
-  [modhoster.de](https://www.modhoster.de/spiel/ls-25) **plus** die
-  „Hirschfeld-Version"-Community-Umbauten von
+- **🌐 Drei Katalog-Quellen in einem Tab (~11.000 Mods gesamt):** Der offizielle
+  GIANTS-Katalog von [farming-simulator.com/mods.php](https://www.farming-simulator.com/mods.php)
+  **plus** der Community-Katalog von [modhoster.de](https://www.modhoster.de/spiel/ls-25)
+  **plus** die „Hirschfeld-Version"-Community-Umbauten von
   [hof-hirschfeld.de](https://www.hof-hirschfeld.de/). Alle drei werden beim
   ersten Start parallel im Hintergrund geladen und persistent gecacht — Suche
   und Filtern sind danach instant. Community-Einträge sind mit einem Source-
   Badge markiert („Modhoster" / „Hof Hirschfeld") und öffnen für den Download
   den Browser (die beiden Community-Seiten verlangen Login bzw. Werbe-Consent).
 - **🔍 Suche und Kategorien:** Live-Textfilter (Titel/Autor/Kategorie) plus
-  Auswahl aus den 154 GIANTS-Kategorien (Karten, Traktoren, Anhänger, …).
-- **📥 Direkt herunterladen:** „Herunterladen"-Button pro Katalog-Karte lädt
-  die ZIP samt Vorschaubild direkt vom offiziellen GIANTS-CDN. Der Download
+  Auswahl aus den GIANTS-Kategorien (Karten, Traktoren, Anhänger, …).
+- **📥 Direkt herunterladen (GIANTS):** „Herunterladen"-Button pro Katalog-Karte
+  lädt die ZIP samt Vorschaubild direkt vom offiziellen GIANTS-CDN. Der Download
   landet in einem persistenten Ordner (`Downloads`-Tab), von dort per Klick
   installierbar. Kein Browser-Umweg nötig.
 - **👁 Detailansicht in-App:** Doppelklick oder „Details"-Button öffnet ein
@@ -42,9 +41,19 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
   auf — Steam startet das Spiel, Windows und Linux (Proton).
 - **⏻ Aktivieren/Deaktivieren:** Umbenennen zu `.zip.disabled` (LS25 ignoriert
   die Datei) — Mod bleibt vorhanden, wird aber nicht mehr geladen.
-- **🖼 Vorschaubilder:** Icons aus der Mod-ZIP werden extrahiert; wenn die ZIP
-  nur DDS-Icons enthält (viele Mods), holt die App das offizielle Cover vom
-  ModHub-CDN als Fallback.
+- **🖼 Vorschaubilder für praktisch jeden Mod:** PNG-Icons aus der Mod-ZIP werden
+  extrahiert (Store-Bilder bevorzugt). Wenn nur `icon.dds` vorhanden ist —
+  Standard bei vielen Community-Mods —, dekodiert die App die DDS (BC1/BC3/BGRA)
+  intern zu PNG. Für Mods im GIANTS-Katalog wird zusätzlich das kuratierte
+  CDN-Cover nachgeladen.
+- **💾 Backup und Restore:** Komplette Mod-Konfiguration (aktivierte und
+  deaktivierte Mods + Enabled-States) als selbstenthaltenes ZIP exportieren
+  und auf einem anderen Rechner oder nach einem Neuaufsetzen wiederherstellen.
+  Ideal für Sync zwischen mehreren Rechnern oder als Snapshot pro Karriere.
+- **🇩🇪🇬🇧 Zweisprachige App-UI (Deutsch + Englisch):** Sprachauswahl im
+  Einstellungen-Fenster mit Länderflaggen, Live-Umschaltung im Betrieb ohne
+  Neustart. Community-Beiträge für weitere Sprachen willkommen (siehe
+  `LSModManager/Localization/`).
 - **🐧 Linux-Support:** Erkennt automatisch den LS25-Mod-Ordner im
   Steam-Proton-Präfix, egal auf welcher Platte Steam-Library liegt
   (`libraryfolders.vdf` wird geparst). Manueller Override in den Einstellungen.
@@ -81,8 +90,8 @@ chmod +x LSModManager-*-x86_64.AppImage
 1. **Beim ersten Start** wird der Mod-Ordner automatisch erkannt (Windows:
    `Dokumente\My Games\FarmingSimulator2025\mods`; Linux: Steam-Proton-Präfix
    auf allen Steam-Libraries). Falls die Erkennung fehlschlägt, in ⚙
-   *Einstellungen* einen manuellen Pfad setzen. Der Katalog (~4800 Mods) wird
-   im Hintergrund geladen — Statusbar zeigt den Fortschritt.
+   *Einstellungen* einen manuellen Pfad setzen. Der Katalog (~11.000 Mods aus
+   drei Quellen) wird im Hintergrund geladen — Statusbar zeigt den Fortschritt.
 2. **Installierte Mods verwalten (Tab „📦 Installiert"):** Live-Suche oben
    (Titel/Autor/Dateiname). Karten mit Icon, Titel, Autor, Version, Status.
    Pro Karte rechts: „⏻ (De-)Aktivieren", „🗑 Deinstallieren", und bei
@@ -103,13 +112,20 @@ chmod +x LSModManager-*-x86_64.AppImage
    Update-Badge und Update-Button.
 7. **Spiel starten:** Toolbar → „🚜 LS25 starten" — öffnet LS25 über Steam.
 8. **Ordner öffnen:** Toolbar → „📁 Mod-Ordner" bzw. „⬇ Downloads-Ordner".
+9. **Backup und Restore:** Toolbar → „💾 Backup" schreibt alle installierten
+   Mods (aktiv + deaktiviert) plus Enabled-States in ein ZIP-Archiv.
+   „📂 Restore" liest so ein ZIP wieder ein und stellt den kompletten Zustand
+   wieder her — funktioniert auch auf einem frisch aufgesetzten Rechner ohne
+   Internet-Verbindung.
 
 ## Einstellungen
 
+- **App-Sprache:** Deutsch oder Englisch — Live-Umschaltung ohne Neustart.
+  Weitere Sprachen als Community-PR (siehe `LSModManager/Localization/`).
 - **LS25-Mod-Ordner:** Auto-Erkennung + manueller Override. Der erkannte Pfad
   wird angezeigt und kann per „Neu erkennen" aufgefrischt werden.
 - **Katalog-Sprache:** DE/EN/FR/ES/IT/PL — bestimmt, in welcher Sprache Titel
-  und Kategorien vom ModHub geladen werden.
+  und Kategorien vom GIANTS-ModHub geladen werden.
 - **Katalog-Cache-Refresh:** Wählbar zwischen „bei jedem Start neu",
   1 h / 6 h / 12 h / 24 h (Default) / 7 Tage / nie. Der ↺-Button im
   Katalog-Tab erzwingt immer einen Refresh.
@@ -139,9 +155,13 @@ tar.gz, AppImage) baut.
 
 ## Rechtliches
 
-Diese App ist **kein offizielles Produkt** von GIANTS Software. Sie greift auf
-den öffentlichen ModHub-Katalog nur mit gebremster Rate lesend zu, der eigentliche
-Download läuft immer über den Browser des Nutzers (User-initiiert, ToS-konform).
+Diese App ist **kein offizielles Produkt** von GIANTS Software. Katalog- und
+Detail-Seiten des offiziellen ModHubs werden mit gebremster Rate (300 ms zwischen
+Seiten) lesend abgefragt. Der In-App-Download vom GIANTS-CDN imitiert genau das,
+was ein Klick auf „Download" auf der Detail-Seite tut — keine Login-Session,
+kein Rate-Limit-Umgehen, transparenter User-Agent. Modhoster- und Hof-Hirschfeld-
+Downloads werden bewusst an den Browser des Nutzers delegiert, weil diese Seiten
+Login bzw. Werbe-Consent voraussetzen.
 
 ## Lizenz
 

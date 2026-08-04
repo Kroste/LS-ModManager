@@ -6,7 +6,8 @@
   aktivieren/deaktivieren, deinstallieren, ModHub-Katalog browsen.
 - **Stack:** C# / .NET 10 / Avalonia 12.1, CommunityToolkit.Mvvm,
   Microsoft.Extensions.DependencyInjection, NLog (mit Secret-Masking),
-  HtmlAgilityPack, xunit.v3 + FluentAssertions 7.x.
+  HtmlAgilityPack, Pfim + SkiaSharp (DDS-Dekodierung), xunit.v3 +
+  FluentAssertions 7.x.
 - **Struktur:** Flach (kein `src/`), `.slnx`, Central Package Management,
   `Directory.Build.props`, MinVer (Tags `v*`).
 - **Konventionen:** Alle Fenster erben von `ChromeWindow`, Kroste-Card-Look,
@@ -15,7 +16,7 @@
 - **Repo:** `https://github.com/Kroste/LS-ModManager`
 - **Lokaler Pfad:** `/home/OsteL/Entwicklung/LS-ModManager`
 
-## Aktueller Stand (v0.1.0 initial)
+## Aktueller Stand (v0.2.0)
 
 - Grundgerüst nach Kroste-Standard aufgesetzt (Directory.Build.props, CPM, slnx,
   CI + Release-Workflows, dependabot, FUNDING, App-Icon via Pillow-Script,
@@ -265,6 +266,13 @@
   gespeichert. `AppPaths.FindExistingPreview(zipPath)` probiert beim Lesen beide
   Endungen. Fällt bei `.png` mit tatsächlichem JPG-Inhalt auf `Auto-Delete` in
   `InstalledModItemViewModel.LoadPreview`.
+- **Single-file-Publish-Falle (IL3000):** `Assembly.Location` liefert in single-
+  file-Apps immer einen leeren String — der Compiler warnt mit IL3000, und
+  `TreatWarningsAsErrors` macht daraus einen Build-Fehler. Aufgeflogen beim
+  v0.2.0-Release (Build lokal grün, Release-Workflow rot). Statt `Assembly.
+  Location` immer `Environment.ProcessPath` nutzen — funktioniert in beiden
+  Modi. Lokal reproduzieren mit `dotnet publish -c Release -r linux-x64
+  --self-contained true -p:PublishSingleFile=true`.
 - **Bekannte Grenzen:** ModHub-Parser bricht potenziell bei GIANTS-Site-Redesign
   — CSS-Selektoren sind bewusst tolerant, aber nicht immun. Neuen Selektor bei
   Bedarf in `ModHubService.ParseListPage` nachziehen. HTML-Fixture-Test bleibt
