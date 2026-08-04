@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LSModManager.Localization;
 using LSModManager.Services;
 using NLog;
 
@@ -29,6 +30,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
         _main = main;
         _modId = modId;
         Title = initialTitle;
+        _description = L.T("ModDetail_Loading");
     }
 
     [ObservableProperty] private string _title = "";
@@ -39,7 +41,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
     [ObservableProperty] private string _releaseDate = "";
     [ObservableProperty] private string _platform = "";
     [ObservableProperty] private string _rating = "";
-    [ObservableProperty] private string _description = "Lade Details …";
+    [ObservableProperty] private string _description = "";
     [ObservableProperty] private string _statusText = "";
     [ObservableProperty] private bool _isLoading = true;
     [ObservableProperty]
@@ -60,7 +62,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
             var detail = await _hub.FetchModDetailAsync(_modId, lang);
             if (detail is null)
             {
-                Description = "Details konnten nicht geladen werden.";
+                Description = L.T("ModDetail_LoadFailed");
                 return;
             }
             Title = detail.Title;
@@ -80,7 +82,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn(ex, "Detail-Init fehlgeschlagen für mod_id={id}", _modId);
-            Description = "Fehler beim Laden.";
+            Description = L.T("ModDetail_LoadError");
         }
         finally { IsLoading = false; }
     }
@@ -88,9 +90,9 @@ public sealed partial class ModDetailViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanDownload))]
     public async Task DownloadAsync()
     {
-        StatusText = "Download läuft — Statusbar im Hauptfenster zeigt Fortschritt.";
+        StatusText = L.T("ModDetail_DownloadRunning");
         await _main.DownloadFromDetailAsync(_modId, Title);
-        StatusText = "Download angestoßen — sichtbar im Downloads-Tab.";
+        StatusText = L.T("ModDetail_DownloadStarted");
     }
 
     private bool CanDownload() => DownloadReady;
@@ -111,7 +113,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Browser nicht öffnen: {url}", DetailUrl);
-            StatusText = "Fehler: Browser konnte nicht geöffnet werden.";
+            StatusText = L.T("ModDetail_BrowserError");
         }
     }
 }

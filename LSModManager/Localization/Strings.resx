@@ -14,6 +14,70 @@
   <!-- ============ Common ============ -->
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
+
+  <!-- ============ Statusbar messages (dynamic, set via L.T/L.F from VMs) ============
+       Placeholder-Keys ({0}, {1}) are consumed via L.F with CurrentCulture format.
+       Live language switch: VMs subscribe to LocalizationService.PropertyChanged and
+       renotify the affected properties (currently ModPathStatusText). Transient
+       StatusText messages update themselves on the next user action. -->
+  <data name="Status_Ready" xml:space="preserve"><value>Ready.</value></data>
+  <data name="Status_LoadingInstalled" xml:space="preserve"><value>Loading installed mods …</value></data>
+  <data name="Status_InstalledCount" xml:space="preserve"><value>{0} mods installed.</value></data>
+  <data name="Status_Installing" xml:space="preserve"><value>Installing {0} …</value></data>
+  <data name="Status_InstallingProgress" xml:space="preserve"><value>Installing ({0}/{1}): {2} …</value></data>
+  <data name="Status_ModInstalled" xml:space="preserve"><value>Mod installed.</value></data>
+  <data name="Status_InstallFailed" xml:space="preserve"><value>Installation failed: {0}</value></data>
+  <data name="Status_BulkInstalled" xml:space="preserve"><value>✓ {0} mod(s) installed.</value></data>
+  <data name="Status_BulkInstalledWithSkipped" xml:space="preserve"><value>✓ {0} installed, {1} skipped (see log).</value></data>
+  <data name="Status_Uninstalling" xml:space="preserve"><value>Uninstalling {0} …</value></data>
+  <data name="Status_ModUninstalled" xml:space="preserve"><value>Mod uninstalled.</value></data>
+  <data name="Status_ModEnabled" xml:space="preserve"><value>Mod enabled.</value></data>
+  <data name="Status_ModDisabled" xml:space="preserve"><value>Mod disabled.</value></data>
+  <data name="Status_BulkEnabled" xml:space="preserve"><value>✓ {0} mod(s) enabled.</value></data>
+  <data name="Status_BulkDisabled" xml:space="preserve"><value>✓ {0} mod(s) disabled.</value></data>
+  <data name="Status_BulkUninstalled" xml:space="preserve"><value>✓ {0} mod(s) uninstalled.</value></data>
+  <data name="Status_LaunchingGame" xml:space="preserve"><value>Launching Farming Simulator via Steam …</value></data>
+  <data name="Status_LaunchFailed" xml:space="preserve"><value>Launch failed: {0}</value></data>
+  <data name="Status_CheckingUpdates" xml:space="preserve"><value>Checking for updates ({0}) — {1} …</value></data>
+  <data name="Status_UpdatesFound" xml:space="preserve"><value>✓ {0} of {1} mods have updates.</value></data>
+  <data name="Status_UpdatesNoneFound" xml:space="preserve"><value>No updates found ({0} checked).</value></data>
+  <data name="Status_UpdateCheckFailed" xml:space="preserve"><value>Update check failed: {0}</value></data>
+  <data name="Status_UpdateNoCatalogEntry" xml:space="preserve"><value>No catalog entry found for update.</value></data>
+  <data name="Status_UpdateNoModPath" xml:space="preserve"><value>Mod folder not set — configure in settings.</value></data>
+  <data name="Status_UpdateDownloading" xml:space="preserve"><value>⬇ Update {0}: {1}</value></data>
+  <data name="Status_UpdateReplacing" xml:space="preserve"><value>Replacing {0} …</value></data>
+  <data name="Status_UpdateInstalled" xml:space="preserve"><value>✓ Update installed: {0} ({1} → {2})</value></data>
+  <data name="Status_UpdateFailed" xml:space="preserve"><value>Update error: {0}</value></data>
+  <data name="Status_CatalogFromCache" xml:space="preserve"><value>Catalog from cache: {0} entries ({1} ago). ↺ to refresh.</value></data>
+  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Loading ModHub catalog (page 1) …</value></data>
+  <data name="Status_CatalogEmpty" xml:space="preserve"><value>Catalog empty or unreachable (see log).</value></data>
+  <data name="Status_CatalogPage1Loaded" xml:space="preserve"><value>Catalog: {0} entries (page 1), rest is loading …</value></data>
+  <data name="Status_CatalogPageLoaded" xml:space="preserve"><value>Catalog: {0} entries (page {1} loaded) …</value></data>
+  <data name="Status_CatalogGiantsComplete" xml:space="preserve"><value>GIANTS catalog complete: {0} entries on {1} pages.</value></data>
+  <data name="Status_CatalogModhosterPage" xml:space="preserve"><value>Catalog: {0} (Modhoster page {1}) …</value></data>
+  <data name="Status_CatalogModhosterComplete" xml:space="preserve"><value>Catalog complete: {0} entries (GIANTS + Modhoster).</value></data>
+  <data name="Status_CatalogHofHirschfeldPage" xml:space="preserve"><value>Catalog: {0} (Hof Hirschfeld: {1} p{2}) …</value></data>
+  <data name="Status_CatalogAllComplete" xml:space="preserve"><value>Catalog: {0} entries (GIANTS + Modhoster + Hof Hirschfeld).</value></data>
+  <data name="Status_CatalogError" xml:space="preserve"><value>Catalog error: {0}</value></data>
+  <data name="Status_BrowserOpened" xml:space="preserve"><value>Browser opened: {0}</value></data>
+  <data name="Status_DownloadNoModId" xml:space="preserve"><value>Could not read mod_id from URL.</value></data>
+  <data name="Status_Downloading" xml:space="preserve"><value>⬇ {0}: {1}</value></data>
+  <data name="Status_Downloaded" xml:space="preserve"><value>✓ Downloaded: {0} — ready in Downloads tab.</value></data>
+  <data name="Status_DownloadDeleted" xml:space="preserve"><value>Deleted: {0}</value></data>
+  <data name="Status_DownloadInstalled" xml:space="preserve"><value>✓ Installed: {0}</value></data>
+
+  <!-- ============ Mod path detection status ============ -->
+  <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod folder found</value></data>
+  <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod folder not found</value></data>
+
+  <!-- ============ Mod detail viewmodel ============ -->
+  <data name="ModDetail_Loading" xml:space="preserve"><value>Loading details …</value></data>
+  <data name="ModDetail_LoadFailed" xml:space="preserve"><value>Details could not be loaded.</value></data>
+  <data name="ModDetail_LoadError" xml:space="preserve"><value>Error while loading.</value></data>
+  <data name="ModDetail_DownloadRunning" xml:space="preserve"><value>Download running — the main window statusbar shows progress.</value></data>
+  <data name="ModDetail_DownloadStarted" xml:space="preserve"><value>Download started — visible in the Downloads tab.</value></data>
+  <data name="ModDetail_BrowserError" xml:space="preserve"><value>Error: could not open browser.</value></data>
 
   <!-- ============ Window titles ============ -->
   <data name="Window_Main" xml:space="preserve"><value>LS-ModManager</value></data>

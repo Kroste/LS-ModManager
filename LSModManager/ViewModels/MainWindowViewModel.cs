@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LSModManager.Localization;
 using LSModManager.Models;
 using LSModManager.Services;
 using NLog;
@@ -53,11 +54,45 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _updates = updates;
 
         ModPath = _paths.GetModPath() ?? "";
+        _statusText = L.T("Status_Ready");
+
+        // Sprachwechsel im laufenden Betrieb: ModPathStatusText und CurrentVersionText
+        // sind computed-Properties mit L.T-Aufrufen — die müssen bei Sprachwechsel neu
+        // an die Bindings gemeldet werden. Alle transienten StatusText-Meldungen bleiben
+        // bewusst in der Sprache, in der sie gesetzt wurden — sie werden bei der
+        // nächsten User-Aktion sowieso überschrieben.
+        LocalizationService.Instance.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(LocalizationService.Current)) return;
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                OnPropertyChanged(nameof(ModPathStatusText));
+                // Sentinel-Label der „Alle Kategorien"-Zeile aktualisieren, falls
+                // die Kategorien schon geladen sind. Position 0 ist per Konvention
+                // der Sentinel (siehe LoadCategoriesAsync / RefreshCatalogAsync).
+                if (Categories.Count > 0 && string.IsNullOrEmpty(Categories[0].Filter))
+                {
+                    var wasSelected = ReferenceEquals(SelectedCategory, Categories[0]);
+                    Categories[0] = CreateAllCategoriesSentinel();
+                    if (wasSelected) SelectedCategory = Categories[0];
+                }
+            });
+        };
+
         _ = RefreshInstalledAsync();
         _ = RefreshDownloadedAsync();
         // Beim Start: Cache instant anzeigen. Refresh-Button macht Full-Reload.
         LoadCatalogFromCacheOrRefresh();
     }
+
+    /// <summary>
+    /// Erzeugt eine frische Sentinel-Instanz mit lokalisiertem Label. Sentinel-
+    /// Kennzeichen ist der leere <see cref="ModHubCategory.Filter"/> — Vergleiche
+    /// laufen darüber, nicht per Referenz-Identität (siehe
+    /// <see cref="EffectiveCategoryFilter"/>).
+    /// </summary>
+    private static ModHubCategory CreateAllCategoriesSentinel() =>
+        new("", L.T("Catalog_AllCategories"));
 
     /// <summary>
     /// Beim App-Start: Cache-Datei lesen (falls vorhanden und frisch genug) und
@@ -93,7 +128,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var ageText = age.TotalHours < 1
             ? $"{age.TotalMinutes:F0} min"
             : $"{age.TotalHours:F1} h";
-        StatusText = $"Katalog aus Cache: {cached.Entries.Count} Einträge (vor {ageText}). ↺ für Frische.";
+        StatusText = L.F("Status_CatalogFromCache", cached.Entries.Count, ageText);
 
         // Kategorien werden nicht mit-gecacht (Sprach-abhängig, klein) — im
         // Hintergrund einmalig nachladen, damit der Filter-Dropdown gefüllt ist.
@@ -112,7 +147,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
                 if (Categories.Count > 0) return;
-                Categories.Add(AllCategoriesSentinel);
+                Categories.Add(CreateAllCategoriesSentinel());
                 foreach (var c in cats) Categories.Add(c);
                 Log.Info("Kategorien nachgeladen: {n}", cats.Count);
             });
@@ -148,8 +183,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private string _modPath = "";
 
     public string ModPathStatusText => string.IsNullOrWhiteSpace(ModPath)
-        ? "✗ Mod-Ordner nicht gefunden"
-        : "✓ Mod-Ordner gefunden";
+        ? L.T("ModPath_NotFound")
+        : L.T("ModPath_Found");
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RefreshInstalledCommand))]
@@ -163,7 +198,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
-    private string _statusText = "Bereit.";
+    private string _statusText = "";
 
     /// <summary>Filter-Text für den Katalog. Wird live angewandt (Titel/Autor/Kategorie).</summary>
     [ObservableProperty]
@@ -181,19 +216,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<ModHubCategory> Categories { get; } = new();
 
-    /// <summary>„Alle Kategorien"-Sentinel für die ComboBox.</summary>
-    public static readonly ModHubCategory AllCategoriesSentinel = new("", "Alle Kategorien");
-
     partial void OnSelectedCategoryChanged(ModHubCategory? value)
     {
         // „Alle Kategorien"-Sentinel behandelt der Filter als null (kein Filter).
         _ = RefreshCatalogAsync();
     }
 
-    /// <summary>Der real an die URL angehängte Filter (Sentinel = leer).</summary>
+    /// <summary>
+    /// Der real an die URL angehängte Filter. Der „Alle Kategorien"-Sentinel hat
+    /// einen leeren <see cref="ModHubCategory.Filter"/> — Vergleich per Filter-
+    /// Inhalt, nicht per Referenz-Identität (Sentinel-Instanz kann bei Sprachwechsel
+    /// ausgetauscht werden, damit sich das Label live aktualisiert).
+    /// </summary>
     private string? EffectiveCategoryFilter =>
-        (SelectedCategory is null || SelectedCategory == AllCategoriesSentinel ||
-         string.IsNullOrEmpty(SelectedCategory.Filter))
+        (SelectedCategory is null || string.IsNullOrEmpty(SelectedCategory.Filter))
             ? null
             : SelectedCategory.Filter;
 
@@ -217,19 +253,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            StatusText = "Lade installierte Mods …";
+            StatusText = L.T("Status_LoadingInstalled");
             var list = await Task.Run(() => _install.ListInstalled());
             _allInstalled.Clear();
             foreach (var m in list) _allInstalled.Add(new InstalledModItemViewModel(m));
             RebuildInstalledView();
-            StatusText = $"{_allInstalled.Count} Mods installiert.";
+            StatusText = L.F("Status_InstalledCount", _allInstalled.Count);
             Log.Info("Installierte Mods aktualisiert: {n}", _allInstalled.Count);
             _ = BackfillCoversAsync(_allInstalled, isInstalled: true);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Refresh installierter Mods fehlgeschlagen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
         finally { IsBusy = false; }
     }
@@ -258,15 +294,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            StatusText = $"Installiere {Path.GetFileName(zipPath)} …";
+            StatusText = L.F("Status_Installing", Path.GetFileName(zipPath!));
             await Task.Run(() => _install.Install(zipPath!, overwrite: true));
             await RefreshInstalledAsync();
-            StatusText = "Mod installiert.";
+            StatusText = L.T("Status_ModInstalled");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Installation fehlgeschlagen: {p}", zipPath);
-            StatusText = $"Installation fehlgeschlagen: {ex.Message}";
+            StatusText = L.F("Status_InstallFailed", ex.Message);
         }
         finally { IsBusy = false; }
     }
@@ -295,7 +331,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     skipped++;
                     continue;
                 }
-                StatusText = $"Installiere ({i + 1}/{zipPaths.Count}): {name} …";
+                StatusText = L.F("Status_InstallingProgress", i + 1, zipPaths.Count, name);
                 try
                 {
                     await Task.Run(() => _install.Install(path, overwrite: true));
@@ -309,8 +345,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             }
             await RefreshInstalledAsync();
             StatusText = skipped == 0
-                ? $"✓ {installed} Mod(s) installiert."
-                : $"✓ {installed} installiert, {skipped} übersprungen (siehe Log).";
+                ? L.F("Status_BulkInstalled", installed)
+                : L.F("Status_BulkInstalledWithSkipped", installed, skipped);
         }
         finally { IsBusy = false; }
     }
@@ -322,15 +358,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            StatusText = $"Deinstalliere {item.DisplayTitle} …";
+            StatusText = L.F("Status_Uninstalling", item.DisplayTitle);
             await Task.Run(() => _install.Uninstall(item.Model));
             await RefreshInstalledAsync();
-            StatusText = "Mod deinstalliert.";
+            StatusText = L.T("Status_ModUninstalled");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Deinstallation fehlgeschlagen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
         finally { IsBusy = false; }
     }
@@ -345,12 +381,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var wantEnabled = !item.Model.IsEnabled;
             await Task.Run(() => _install.SetEnabled(item.Model, wantEnabled));
             await RefreshInstalledAsync();
-            StatusText = wantEnabled ? "Mod aktiviert." : "Mod deaktiviert.";
+            StatusText = L.T(wantEnabled ? "Status_ModEnabled" : "Status_ModDisabled");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Umschalten fehlgeschlagen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
         finally { IsBusy = false; }
     }
@@ -380,9 +416,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
             await RefreshInstalledAsync();
-            StatusText = enable
-                ? $"✓ {changed} Mod(s) aktiviert."
-                : $"✓ {changed} Mod(s) deaktiviert.";
+            StatusText = L.F(enable ? "Status_BulkEnabled" : "Status_BulkDisabled", changed);
         }
         finally { IsBusy = false; }
     }
@@ -408,7 +442,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
             await RefreshInstalledAsync();
-            StatusText = $"✓ {removed} Mod(s) deinstalliert.";
+            StatusText = L.F("Status_BulkUninstalled", removed);
         }
         finally { IsBusy = false; }
     }
@@ -426,13 +460,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var appId = _settings.Current.SteamAppId > 0 ? _settings.Current.SteamAppId : 2300320;
             var uri = $"steam://run/{appId}";
             Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
-            StatusText = "Landwirtschafts-Simulator wird über Steam gestartet …";
+            StatusText = L.T("Status_LaunchingGame");
             Log.Info("Spiel-Start: {uri}", uri);
         }
         catch (Exception ex)
         {
             Log.Warn(ex, "Spiel konnte nicht gestartet werden");
-            StatusText = $"Fehler beim Start: {ex.Message}";
+            StatusText = L.F("Status_LaunchFailed", ex.Message);
         }
     }
 
@@ -463,7 +497,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 if (modId is null) continue;
 
                 checkedCount++;
-                StatusText = $"Prüfe Updates ({checkedCount}) — {item.DisplayTitle} …";
+                StatusText = L.F("Status_CheckingUpdates", checkedCount, item.DisplayTitle);
                 var detail = await _hub.FetchModDetailAsync(modId.Value, lang);
                 if (detail is null || string.IsNullOrWhiteSpace(detail.Version)) continue;
 
@@ -475,13 +509,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             }
             StatusText = updatedCount > 0
-                ? $"✓ {updatedCount} von {checkedCount} Mods haben Updates."
-                : $"Keine Updates gefunden ({checkedCount} geprüft).";
+                ? L.F("Status_UpdatesFound", updatedCount, checkedCount)
+                : L.F("Status_UpdatesNoneFound", checkedCount);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Update-Prüfung fehlgeschlagen");
-            StatusText = $"Fehler bei Update-Prüfung: {ex.Message}";
+            StatusText = L.F("Status_UpdateCheckFailed", ex.Message);
         }
         finally { IsBusy = false; }
     }
@@ -499,14 +533,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var catalogEntry = LookupCatalogEntry(item.Model.FileName);
         if (catalogEntry is null)
         {
-            StatusText = "Kein Katalog-Eintrag für Update gefunden.";
+            StatusText = L.T("Status_UpdateNoCatalogEntry");
             return;
         }
         var modId = ExtractModIdFromUrl(catalogEntry.DetailUrl);
         if (modId is null) return;
         if (string.IsNullOrWhiteSpace(ModPath))
         {
-            StatusText = "Mod-Ordner nicht gesetzt — in Einstellungen konfigurieren.";
+            StatusText = L.T("Status_UpdateNoModPath");
             return;
         }
 
@@ -519,8 +553,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var oldVersion = item.Version;
 
             var progress = new Progress<ModDownloadProgress>(p =>
-                StatusText = $"⬇ Update {oldTitle}: {p.FormatShort()}"
-                    + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : ""));
+                StatusText = L.F("Status_UpdateDownloading", oldTitle,
+                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : "")));
 
             // 1. Neue Version in den Downloads-Ordner laden (Cover mit).
             var result = await _hub.DownloadModAsync(modId.Value, lang, progress,
@@ -528,7 +562,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     ? null : catalogEntry.PreviewUrl);
 
             // 2. Alte Version aus dem Mod-Ordner entfernen.
-            StatusText = $"Ersetze {oldTitle} …";
+            StatusText = L.F("Status_UpdateReplacing", oldTitle);
             await Task.Run(() => _install.Uninstall(item.Model));
 
             // 3. Neue Version aus Downloads-Ordner installieren (kopiert in Mod-Ordner).
@@ -541,13 +575,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             await RefreshInstalledAsync();
             await RefreshDownloadedAsync();
-            StatusText = $"✓ Update installiert: {oldTitle} ({oldVersion} → {item.UpdateAvailableVersion ?? "neu"})";
+            StatusText = L.F("Status_UpdateInstalled", oldTitle, oldVersion,
+                item.UpdateAvailableVersion ?? "");
             Log.Info("Update installiert: {t}", oldTitle);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Update-Installation fehlgeschlagen");
-            StatusText = $"Update-Fehler: {ex.Message}";
+            StatusText = L.F("Status_UpdateFailed", ex.Message);
         }
         finally { IsBusy = false; }
     }
@@ -592,7 +627,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Mod-Ordner nicht öffnen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
     }
 
@@ -714,7 +749,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Downloads-Ordner nicht öffnen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
     }
 
@@ -725,15 +760,15 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            StatusText = $"Installiere {item.DisplayTitle} …";
+            StatusText = L.F("Status_Installing", item.DisplayTitle);
             await Task.Run(() => _install.Install(item.Model.FilePath, overwrite: true));
             await RefreshInstalledAsync();
-            StatusText = $"✓ Installiert: {item.DisplayTitle}";
+            StatusText = L.F("Status_DownloadInstalled", item.DisplayTitle);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Install-Download fehlgeschlagen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
         finally { IsBusy = false; }
     }
@@ -748,12 +783,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             await Task.Run(() => _install.DeleteDownload(item.Model.FilePath));
             await RefreshDownloadedAsync();
-            StatusText = $"Gelöscht: {item.Model.FileName}";
+            StatusText = L.F("Status_DownloadDeleted", item.Model.FileName);
         }
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Download nicht löschen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
     }
 
@@ -770,7 +805,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _fullLoadCts = new CancellationTokenSource();
 
             IsBusy = true;
-            StatusText = "Lade ModHub-Katalog (Seite 1) …";
+            StatusText = L.T("Status_CatalogLoadingPage1");
             lock (_catalogLock)
             {
                 _allCatalog.Clear();
@@ -789,7 +824,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 if (Categories.Count == 0)
                 {
                     var cats = ModHubService.ParseCategories(html);
-                    Categories.Add(AllCategoriesSentinel);
+                    Categories.Add(CreateAllCategoriesSentinel());
                     foreach (var c in cats) Categories.Add(c);
                     Log.Info("Kategorien geladen: {n}", cats.Count);
                 }
@@ -810,11 +845,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             if (_catalogReachedEnd)
             {
-                StatusText = "Katalog leer oder nicht erreichbar (siehe Log).";
+                StatusText = L.T("Status_CatalogEmpty");
                 return;
             }
 
-            StatusText = $"Katalog: {_allCatalog.Count} Einträge (Seite 1), Rest wird nachgeladen …";
+            StatusText = L.F("Status_CatalogPage1Loaded", _allCatalog.Count);
             // Alle drei Katalog-Quellen parallel im Hintergrund. GIANTS ist am
             // langsamsten (~1-2 min HTML-Scraping), Modhoster ist JSON und schnell,
             // Hof-Hirschfeld ist kleiner Community-Katalog (~30 Kategorien).
@@ -825,7 +860,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "Katalog-Refresh fehlgeschlagen");
-            StatusText = $"Katalog-Fehler: {ex.Message}";
+            StatusText = L.F("Status_CatalogError", ex.Message);
         }
         finally { IsBusy = false; }
     }
@@ -885,7 +920,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     AppendToCatalogView(newlyAdded);
-                    StatusText = $"Katalog: {total} Einträge (Seite {currentPage} geladen) …";
+                    StatusText = L.F("Status_CatalogPageLoaded", total, currentPage);
                 });
 
                 // Inkrementeller Cache alle 10 Seiten — überlebt App-Crash / Close
@@ -900,7 +935,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 lock (_catalogLock) { finalTotal = _allCatalog.Count; finalPage = _lastLoadedPage; }
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    StatusText = $"GIANTS-Katalog vollständig: {finalTotal} Einträge auf {finalPage} Seiten.";
+                    StatusText = L.F("Status_CatalogGiantsComplete", finalTotal, finalPage);
                 });
                 Log.Info("GIANTS-Katalog-Full-Load fertig: {n} Einträge, {p} Seiten", finalTotal, finalPage);
             }
@@ -960,7 +995,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     AppendToCatalogView(newlyAdded);
-                    StatusText = $"Katalog: {total} (Modhoster-Seite {currentPage}) …";
+                    StatusText = L.F("Status_CatalogModhosterPage", total, currentPage);
                 });
 
                 if (currentPage % 10 == 0)
@@ -972,7 +1007,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             lock (_catalogLock) finalTotal = _allCatalog.Count;
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                StatusText = $"Katalog vollständig: {finalTotal} Einträge (GIANTS + Modhoster).";
+                StatusText = L.F("Status_CatalogModhosterComplete", finalTotal);
             });
             Log.Info("Modhoster-Full-Load fertig: +{n} neue, {t} gesamt", totalAdded, finalTotal);
         }
@@ -1026,7 +1061,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
                         AppendToCatalogView(newlyAdded);
-                        StatusText = $"Katalog: {total} (Hof Hirschfeld: {currentSlug} S{currentPage}) …";
+                        StatusText = L.F("Status_CatalogHofHirschfeldPage", total, currentSlug, currentPage);
                     });
 
                     // Nur weiter blättern wenn Seite voll war (12 pro Seite typisch).
@@ -1040,7 +1075,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             lock (_catalogLock) finalTotal = _allCatalog.Count;
             Log.Info("Hof-Hirschfeld-Full-Load fertig: +{n} neue, {t} gesamt", totalAdded, finalTotal);
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                StatusText = $"Katalog: {finalTotal} Einträge (GIANTS + Modhoster + Hof Hirschfeld).");
+                StatusText = L.F("Status_CatalogAllComplete", finalTotal));
         }
         catch (OperationCanceledException) { /* ok */ }
         catch (Exception ex) { Log.Warn(ex, "Hof-Hirschfeld-Full-Load Fehler"); }
@@ -1106,12 +1141,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             Process.Start(new ProcessStartInfo(item.DetailUrl) { UseShellExecute = true });
-            StatusText = $"Browser geöffnet: {item.Title}";
+            StatusText = L.F("Status_BrowserOpened", item.Title);
         }
         catch (Exception ex)
         {
             Log.Warn(ex, "Konnte Browser nicht öffnen");
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
     }
 
@@ -1127,7 +1162,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var modId = ExtractModIdFromUrl(target.DetailUrl);
         if (modId is null)
         {
-            StatusText = "Konnte mod_id nicht aus der URL lesen.";
+            StatusText = L.T("Status_DownloadNoModId");
             return;
         }
 
@@ -1136,17 +1171,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
             IsBusy = true;
             var lang = _settings.Current.CatalogLanguage ?? "de";
             var progress = new Progress<ModDownloadProgress>(p =>
-                StatusText = $"⬇ {target.Title}: {p.FormatShort()}"
-                    + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : ""));
+                StatusText = L.F("Status_Downloading", target.Title,
+                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : "")));
             var result = await _hub.DownloadModAsync(modId.Value, lang, progress,
                 coverImageUrl: string.IsNullOrWhiteSpace(target.PreviewUrl) ? null : target.PreviewUrl);
             await RefreshDownloadedAsync();
-            StatusText = $"✓ Heruntergeladen: {result.FileName} — bereit im Downloads-Tab.";
+            StatusText = L.F("Status_Downloaded", result.FileName);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Download fehlgeschlagen für {title}", target.Title);
-            StatusText = $"Fehler: {ex.Message}";
+            StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
         finally { IsBusy = false; }
     }

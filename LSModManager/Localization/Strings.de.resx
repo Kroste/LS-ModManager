@@ -8,6 +8,63 @@
 
   <data name="Common_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Speichern</value></data>
+  <data name="Common_ErrorPrefix" xml:space="preserve"><value>Fehler: </value></data>
+
+  <data name="Status_Ready" xml:space="preserve"><value>Bereit.</value></data>
+  <data name="Status_LoadingInstalled" xml:space="preserve"><value>Lade installierte Mods …</value></data>
+  <data name="Status_InstalledCount" xml:space="preserve"><value>{0} Mods installiert.</value></data>
+  <data name="Status_Installing" xml:space="preserve"><value>Installiere {0} …</value></data>
+  <data name="Status_InstallingProgress" xml:space="preserve"><value>Installiere ({0}/{1}): {2} …</value></data>
+  <data name="Status_ModInstalled" xml:space="preserve"><value>Mod installiert.</value></data>
+  <data name="Status_InstallFailed" xml:space="preserve"><value>Installation fehlgeschlagen: {0}</value></data>
+  <data name="Status_BulkInstalled" xml:space="preserve"><value>✓ {0} Mod(s) installiert.</value></data>
+  <data name="Status_BulkInstalledWithSkipped" xml:space="preserve"><value>✓ {0} installiert, {1} übersprungen (siehe Log).</value></data>
+  <data name="Status_Uninstalling" xml:space="preserve"><value>Deinstalliere {0} …</value></data>
+  <data name="Status_ModUninstalled" xml:space="preserve"><value>Mod deinstalliert.</value></data>
+  <data name="Status_ModEnabled" xml:space="preserve"><value>Mod aktiviert.</value></data>
+  <data name="Status_ModDisabled" xml:space="preserve"><value>Mod deaktiviert.</value></data>
+  <data name="Status_BulkEnabled" xml:space="preserve"><value>✓ {0} Mod(s) aktiviert.</value></data>
+  <data name="Status_BulkDisabled" xml:space="preserve"><value>✓ {0} Mod(s) deaktiviert.</value></data>
+  <data name="Status_BulkUninstalled" xml:space="preserve"><value>✓ {0} Mod(s) deinstalliert.</value></data>
+  <data name="Status_LaunchingGame" xml:space="preserve"><value>Landwirtschafts-Simulator wird über Steam gestartet …</value></data>
+  <data name="Status_LaunchFailed" xml:space="preserve"><value>Fehler beim Start: {0}</value></data>
+  <data name="Status_CheckingUpdates" xml:space="preserve"><value>Prüfe Updates ({0}) — {1} …</value></data>
+  <data name="Status_UpdatesFound" xml:space="preserve"><value>✓ {0} von {1} Mods haben Updates.</value></data>
+  <data name="Status_UpdatesNoneFound" xml:space="preserve"><value>Keine Updates gefunden ({0} geprüft).</value></data>
+  <data name="Status_UpdateCheckFailed" xml:space="preserve"><value>Fehler bei Update-Prüfung: {0}</value></data>
+  <data name="Status_UpdateNoCatalogEntry" xml:space="preserve"><value>Kein Katalog-Eintrag für Update gefunden.</value></data>
+  <data name="Status_UpdateNoModPath" xml:space="preserve"><value>Mod-Ordner nicht gesetzt — in Einstellungen konfigurieren.</value></data>
+  <data name="Status_UpdateDownloading" xml:space="preserve"><value>⬇ Update {0}: {1}</value></data>
+  <data name="Status_UpdateReplacing" xml:space="preserve"><value>Ersetze {0} …</value></data>
+  <data name="Status_UpdateInstalled" xml:space="preserve"><value>✓ Update installiert: {0} ({1} → {2})</value></data>
+  <data name="Status_UpdateFailed" xml:space="preserve"><value>Update-Fehler: {0}</value></data>
+  <data name="Status_CatalogFromCache" xml:space="preserve"><value>Katalog aus Cache: {0} Einträge (vor {1}). ↺ für Frische.</value></data>
+  <data name="Status_CatalogLoadingPage1" xml:space="preserve"><value>Lade ModHub-Katalog (Seite 1) …</value></data>
+  <data name="Status_CatalogEmpty" xml:space="preserve"><value>Katalog leer oder nicht erreichbar (siehe Log).</value></data>
+  <data name="Status_CatalogPage1Loaded" xml:space="preserve"><value>Katalog: {0} Einträge (Seite 1), Rest wird nachgeladen …</value></data>
+  <data name="Status_CatalogPageLoaded" xml:space="preserve"><value>Katalog: {0} Einträge (Seite {1} geladen) …</value></data>
+  <data name="Status_CatalogGiantsComplete" xml:space="preserve"><value>GIANTS-Katalog vollständig: {0} Einträge auf {1} Seiten.</value></data>
+  <data name="Status_CatalogModhosterPage" xml:space="preserve"><value>Katalog: {0} (Modhoster-Seite {1}) …</value></data>
+  <data name="Status_CatalogModhosterComplete" xml:space="preserve"><value>Katalog vollständig: {0} Einträge (GIANTS + Modhoster).</value></data>
+  <data name="Status_CatalogHofHirschfeldPage" xml:space="preserve"><value>Katalog: {0} (Hof Hirschfeld: {1} S{2}) …</value></data>
+  <data name="Status_CatalogAllComplete" xml:space="preserve"><value>Katalog: {0} Einträge (GIANTS + Modhoster + Hof Hirschfeld).</value></data>
+  <data name="Status_CatalogError" xml:space="preserve"><value>Katalog-Fehler: {0}</value></data>
+  <data name="Status_BrowserOpened" xml:space="preserve"><value>Browser geöffnet: {0}</value></data>
+  <data name="Status_DownloadNoModId" xml:space="preserve"><value>Konnte mod_id nicht aus der URL lesen.</value></data>
+  <data name="Status_Downloading" xml:space="preserve"><value>⬇ {0}: {1}</value></data>
+  <data name="Status_Downloaded" xml:space="preserve"><value>✓ Heruntergeladen: {0} — bereit im Downloads-Tab.</value></data>
+  <data name="Status_DownloadDeleted" xml:space="preserve"><value>Gelöscht: {0}</value></data>
+  <data name="Status_DownloadInstalled" xml:space="preserve"><value>✓ Installiert: {0}</value></data>
+
+  <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod-Ordner gefunden</value></data>
+  <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod-Ordner nicht gefunden</value></data>
+
+  <data name="ModDetail_Loading" xml:space="preserve"><value>Lade Details …</value></data>
+  <data name="ModDetail_LoadFailed" xml:space="preserve"><value>Details konnten nicht geladen werden.</value></data>
+  <data name="ModDetail_LoadError" xml:space="preserve"><value>Fehler beim Laden.</value></data>
+  <data name="ModDetail_DownloadRunning" xml:space="preserve"><value>Download läuft — Statusbar im Hauptfenster zeigt Fortschritt.</value></data>
+  <data name="ModDetail_DownloadStarted" xml:space="preserve"><value>Download angestoßen — sichtbar im Downloads-Tab.</value></data>
+  <data name="ModDetail_BrowserError" xml:space="preserve"><value>Fehler: Browser konnte nicht geöffnet werden.</value></data>
 
   <data name="Window_Main" xml:space="preserve"><value>LS-ModManager</value></data>
   <data name="Window_Settings" xml:space="preserve"><value>Einstellungen</value></data>
