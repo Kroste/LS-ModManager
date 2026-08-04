@@ -7,7 +7,7 @@
 Mod-Manager für **Landwirtschaftssimulator 25 (LS25/FS25)** — Desktop-App für
 Windows und Linux (C# / .NET 10 / Avalonia 12).
 
-<!-- Screenshot: docs/screenshot.png einfügen, sobald die UI steht -->
+![LS-ModManager Screenshot: Mod-Katalog mit NEU-Badges und Statusbar](docs/screenshot.png)
 
 ## Features
 
