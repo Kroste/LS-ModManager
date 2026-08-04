@@ -58,7 +58,7 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
   - Rechtsklick auf jede Installiert-Card: Details / Ordner im Dateimanager
     öffnen / Filename kopieren / Deinstallieren.
   - Sortierung (Name / Größe / Datum / Status) und Filter „nur mit Update"
-    im Installiert-Tab.
+    im Installiert-Tab; Katalog-Sortierung (Name / Autor / Kategorie).
   - Statusbar zeigt Gesamtgröße der aktiven Mods („12,3 GB aktiv") und
     echten Prozent-Fortschritt bei Downloads/Backup/Restore.
   - Doppelklick auf Installiert-Card öffnet das Detail-Fenster (wenn
@@ -154,8 +154,9 @@ unter `%LOCALAPPDATA%\LSModManager\cache\` (Windows) bzw.
 ## Logs & Fehlersuche
 
 Logdateien liegen im Unterordner `logs/` neben der Anwendung (Tagesarchiv,
-14 Tage). Bei einem Problem bitte ein Issue mit der aktuellen Logdatei eröffnen —
-Passwörter und Tokens werden automatisch maskiert.
+14 Tage). **Schnellzugriff:** *Über* → „📁 Log-Ordner" öffnet den Ordner
+direkt im Dateimanager. Bei einem Problem bitte ein Issue mit der aktuellen
+Logdatei eröffnen — Passwörter und Tokens werden automatisch maskiert.
 
 ## Entwicklung
 

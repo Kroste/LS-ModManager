@@ -106,9 +106,10 @@
     `chmod +x`. Nach Skript-Start `Environment.Exit(0)` + Kill-Fallback
     nach 1,5 s. Proxy-aware via `WebRequest.DefaultWebProxy`
     (Arbeitslaptop-Sophos).
-- MainWindow: Header + Toolbar-Sektionen (Spiel / Installation / System) +
-  TabControl mit drei Tabs (Installiert / Mod-Katalog / Downloads) +
-  Statusbar. Toolbar hat „🚜 LS25 starten" (Steam-URI) und „🔄 Updates prüfen".
+- MainWindow: Header + **Erst-Start-Warnbanner** (sichtbar wenn
+  `IsModPathMissing`, weist auf Einstellungen hin) + Toolbar-Sektionen
+  (Spiel / Installation / System) + TabControl mit drei Tabs (Installiert /
+  Mod-Katalog / Downloads) + Statusbar. Toolbar hat „🚜 LS25 starten" (Steam-URI) und „🔄 Updates prüfen".
   Card-basierter Look, kein Fluent-Grau. **Statusbar-Progress**: zwei
   ProgressBars an derselben Grid-Zelle, `IsVisible` toggled zwischen
   Indeterminate-Animation (Busy ohne Zahlwert) und Determinate mit echtem
@@ -146,12 +147,17 @@
   ungültige Mod-Archive (Log-Warnung, User sieht Count in Statusbar).
   Avalonia-12-`DataTransfer`-API (`e.DataTransfer.Contains(DataFormat.File)`,
   `TryGetFiles()`).
-- Katalog-Tab: Live-Suche (Titel/Autor/Kategorie), Auto-Full-Load im Hintergrund
-  (alle Seiten sequenziell mit 300 ms Delay, GIANTS hat keinen search-Parameter,
-  daher clientseitig sammeln). Persistenter JSON-Cache unter
+- Katalog-Tab: Live-Suche (Titel/Autor/Kategorie) + Sortier-Dropdown
+  (Standard/Name/Autor/Kategorie), Auto-Full-Load im Hintergrund (alle Seiten
+  sequenziell mit 300 ms Delay, GIANTS hat keinen search-Parameter, daher
+  clientseitig sammeln). Persistenter JSON-Cache unter
   `AppPaths.CacheRoot/catalog-<lang>.json` — beim App-Start instant geladen,
   inkrementeller Save alle 10 Seiten + im finally-Block (überlebt Crash /
   Close). Card-Buttons „📥 Herunterladen" und „👁 Details" (in-app).
+  **Sortierung greift NUR beim expliziten Sort-Wechsel oder Rebuild**, nicht
+  im `AppendToCatalogView` des Background-Full-Loads — sonst würden Positionen
+  bei jedem Seiten-Nachlader umherspringen. Der User kann nach Full-Load
+  erneut sortieren.
   **„NEU"-Badge:** Sidecar-Datei `catalog-<lang>-seen.txt` speichert die
   DetailUrls vom vorherigen App-Start (Textformat, eine URL pro Zeile —
   kürzer und diff-freundlicher als JSON). Beim aktuellen Start wird der
@@ -171,7 +177,9 @@
 - SettingsWindow: Mod-Pfad (Auto-Detect + manueller Override mit Folder-Picker)
   + Katalog-Sprache (ComboBox) + **App-Sprache** (ComboBox mit Länderflaggen,
   Live-Umschaltung).
-- AboutWindow: Version, GitHub-Link, BMC-Link, „Auf Updates prüfen"-Button.
+- AboutWindow: Version, GitHub-Link, BMC-Link, **„📁 Log-Ordner"-Button**
+  (öffnet `AppContext.BaseDirectory/logs` im System-Dateimanager, erspart
+  bei Support-Anfragen die Sucherei), „Auf Updates prüfen"-Button.
   Bei verfügbarem Update + passendem Plattform-Asset erscheint zusätzlich
   „⬇ Update auf vX installieren" mit Progress-Bar; nach Klick lädt die App
   das Asset, startet den Installer und beendet sich selbst.
