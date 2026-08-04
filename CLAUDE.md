@@ -62,6 +62,12 @@
     Download — die Site versteckt Downloads hinter einem Werbung-Consent-
     Overlay; wir öffnen die Detail-Seite im Browser. Author fix
     „Hof Hirschfeld", `Source = HofHirschfeldSource`.
+  - `AppPaths.HasCatalogCoverCache` + `.catalog`-Sidecar-Marker:
+    unterscheidet Katalog-Cover (JPG immer, PNG mit Marker) von ZIP-icon.png-
+    Platzhaltern. Der Backfill triggert auf `!HasCatalogCoverCache`, nicht auf
+    „kein Preview" — so bekommen auch Downloads mit ZIP-internem Icon das
+    bessere CDN-Cover; und Endlos-Retrigger bei PNG-Coverdatei (Hof-Hirschfeld)
+    wird verhindert.
   - `ModhosterCatalogService`: zweite Katalog-Quelle über die offene JSON-API
     `modhoster.de/mods.json?game_id=1` (game_id=1 ist bei modhoster LS25).
     24 Mods pro Seite, sequenzielles Paging mit 300 ms Delay. Kein In-App-

@@ -628,14 +628,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var itemsWithoutPreview = collection
-                .Where(i => i.Preview is null)
+            // Nicht nur „Preview null" — auch wenn schon ein ZIP-icon.png-Cache
+            // existiert, aber kein Katalog-Cover, wollen wir das bessere CDN-Bild
+            // holen (Modhoster/Hof-Hirschfeld-Downloads haben kein Auto-Cover).
+            var itemsWithoutCatalogCover = collection
+                .Where(i => !AppPaths.HasCatalogCoverCache(i.Model.FilePath))
                 .Select(i => i.Model.FilePath)
                 .ToList();
-            if (itemsWithoutPreview.Count == 0) return;
+            if (itemsWithoutCatalogCover.Count == 0) return;
 
             var anyLoaded = false;
-            foreach (var zipPath in itemsWithoutPreview)
+            foreach (var zipPath in itemsWithoutCatalogCover)
             {
                 var coverUrl = LookupCoverUrl(Path.GetFileName(zipPath));
                 if (string.IsNullOrWhiteSpace(coverUrl)) continue;
@@ -667,6 +670,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var normalized = NormalizeForMatch(Path.GetFileNameWithoutExtension(zipFileName));
         if (string.IsNullOrWhiteSpace(normalized)) return null;
 
+        // Sammle ALLE Kandidaten, dann kürzesten Titel wählen. „AutoDrive"
+        // (Basis-Mod) gewinnt so über „AutoDrive Yagodnoye Village Beta"
+        // (Varianten-Mod) — der kürzeste Titel ist typischerweise der
+        // generische Eintrag, den der User haben will.
+        List<ModHubEntry> candidates = new();
         lock (_catalogLock)
         {
             foreach (var e in _allCatalog)
@@ -675,10 +683,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 var titleNorm = NormalizeForMatch(e.Title);
                 if (titleNorm.Length < 3) continue;
                 if (normalized.Contains(titleNorm) || titleNorm.Contains(normalized))
-                    return e.PreviewUrl;
+                    candidates.Add(e);
             }
         }
-        return null;
+        return candidates
+            .OrderBy(e => e.Title.Length)
+            .FirstOrDefault()
+            ?.PreviewUrl;
     }
 
     private static string NormalizeForMatch(string s)

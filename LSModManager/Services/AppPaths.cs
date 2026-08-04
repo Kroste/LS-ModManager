@@ -67,6 +67,38 @@ public static class AppPaths
         return null;
     }
 
+    /// <summary>
+    /// True, wenn für den Mod bereits ein Katalog-Cover (nicht ZIP-icon.png)
+    /// im Cache liegt. Regel:
+    /// <list type="bullet">
+    /// <item>JPG/JPEG → immer Katalog-Cover (ZIPs liefern nie JPG als icon).</item>
+    /// <item>PNG → braucht Sidecar-Marker <c>&lt;basename&gt;.catalog</c>, weil
+    /// dieselbe Extension auch von ZIP-icon.png stammen kann (schwarze Platzhalter
+    /// überschreiben dann sonst NIE das gute Katalog-Cover).</item>
+    /// </list>
+    /// Der Backfill nutzt das, um zu entscheiden welche Mods noch kein
+    /// kuratiertes Cover haben.
+    /// </summary>
+    public static bool HasCatalogCoverCache(string zipPath)
+    {
+        var basePath = PreviewCacheBasePathFor(zipPath);
+        if (File.Exists(basePath + ".jpg") || File.Exists(basePath + ".jpeg")) return true;
+        // PNG + Marker → aus Katalog. PNG ohne Marker → ZIP-icon (kann ersetzt werden).
+        return File.Exists(basePath + ".png") && File.Exists(basePath + ".catalog");
+    }
+
+    /// <summary>
+    /// Schreibt einen leeren Sidecar-Marker, der eine <c>.png</c>-Preview als
+    /// „Katalog-Cover" kennzeichnet — nötig weil PNG-Extension nicht zwischen
+    /// ZIP-icon.png und CDN-PNG unterscheiden kann.
+    /// </summary>
+    public static void WriteCatalogCoverMarker(string zipPath)
+    {
+        var marker = PreviewCacheBasePathFor(zipPath) + ".catalog";
+        try { File.WriteAllBytes(marker, Array.Empty<byte>()); }
+        catch { /* best-effort, nicht kritisch */ }
+    }
+
     /// <summary>Extension aus den ersten Bytes der Bild-Daten raten (JPG vs PNG).</summary>
     public static string GuessImageExtension(byte[] bytes)
     {

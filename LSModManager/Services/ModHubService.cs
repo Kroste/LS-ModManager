@@ -168,6 +168,7 @@ public sealed class ModHubService : IDisposable
                     try { File.Delete(oldPng); } catch { /* best-effort */ }
                 var previewCache = AppPaths.PreviewCacheBasePathFor(targetPath) + ext;
                 await File.WriteAllBytesAsync(previewCache, coverBytes, ct).ConfigureAwait(false);
+                AppPaths.WriteCatalogCoverMarker(targetPath);
                 Log.Info("Cover gecacht ({n} Bytes, {ext}): {p}", coverBytes.Length, ext, previewCache);
             }
             catch (Exception ex)
@@ -349,8 +350,10 @@ public sealed class ModHubService : IDisposable
     public async Task<string?> EnsureCoverCachedAsync(string zipPath, string coverUrl,
         CancellationToken ct = default)
     {
-        var existing = AppPaths.FindExistingPreview(zipPath);
-        if (existing is not null) return existing;
+        // Nur überspringen wenn schon ein Katalog-Cover (.jpg/.jpeg) da ist —
+        // ein ZIP-.png-Placeholder soll durch das Katalog-Cover ersetzt werden
+        // können, weil das kuratierte CDN-Bild immer besser ist.
+        if (AppPaths.HasCatalogCoverCache(zipPath)) return AppPaths.FindExistingPreview(zipPath);
         if (string.IsNullOrWhiteSpace(coverUrl)) return null;
 
         try
@@ -364,6 +367,9 @@ public sealed class ModHubService : IDisposable
             }
             var target = AppPaths.PreviewCacheBasePathFor(zipPath) + ext;
             await File.WriteAllBytesAsync(target, bytes, ct).ConfigureAwait(false);
+            // Marker schreiben (auch bei PNG-Cover) — sonst triggert der nächste
+            // Refresh-Zyklus wieder einen Download in Endlosschleife.
+            AppPaths.WriteCatalogCoverMarker(zipPath);
             Log.Info("Cover-Backfill: {n} Bytes → {p}", bytes.Length, target);
             return target;
         }
