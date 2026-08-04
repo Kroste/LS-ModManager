@@ -73,6 +73,8 @@
                                 Command="{Binding OpenModFolderCommand}" />
                         <Button Content="{loc:Tr Main_OpenDownloadsFolder}"
                                 Command="{Binding OpenDownloadsFolderCommand}" />
+                        <Button Content="{loc:Tr Main_Backup}" Click="OnBackupClick" />
+                        <Button Content="{loc:Tr Main_Restore}" Click="OnRestoreClick" />
                         <Button Content="{loc:Tr Main_Settings}" Click="OnSettingsClick" />
                         <Button Classes="ghost" Content="{loc:Tr Main_About}" Click="OnAboutClick" />
                     </StackPanel>

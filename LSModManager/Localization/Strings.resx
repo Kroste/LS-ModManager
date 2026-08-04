@@ -67,6 +67,20 @@
   <data name="Status_DownloadDeleted" xml:space="preserve"><value>Deleted: {0}</value></data>
   <data name="Status_DownloadInstalled" xml:space="preserve"><value>✓ Installed: {0}</value></data>
 
+  <!-- ============ Backup / Restore ============ -->
+  <data name="Status_BackupNoMods" xml:space="preserve"><value>No installed mods — nothing to back up.</value></data>
+  <data name="Status_BackupCreating" xml:space="preserve"><value>Creating backup ({0}/{1}): {2} …</value></data>
+  <data name="Status_BackupCreated" xml:space="preserve"><value>✓ Backup created: {0} mods, {1:F1} MB → {2}</value></data>
+  <data name="Status_BackupFailed" xml:space="preserve"><value>Backup error: {0}</value></data>
+  <data name="Status_RestoreReading" xml:space="preserve"><value>Reading backup manifest …</value></data>
+  <data name="Status_Restoring" xml:space="preserve"><value>Restoring ({0}/{1}): {2} …</value></data>
+  <data name="Status_RestoreDone" xml:space="preserve"><value>✓ Restore complete: {0} restored, {1} skipped (see log).</value></data>
+  <data name="Status_RestoreFailed" xml:space="preserve"><value>Restore error: {0}</value></data>
+  <data name="Backup_SaveDialogTitle" xml:space="preserve"><value>Save backup</value></data>
+  <data name="Backup_FileTypeLabel" xml:space="preserve"><value>LS-ModManager backup (*.zip)</value></data>
+  <data name="Backup_DefaultFileName" xml:space="preserve"><value>LSModManager-Backup-{0}.zip</value></data>
+  <data name="Restore_OpenDialogTitle" xml:space="preserve"><value>Restore backup</value></data>
+
   <!-- ============ Mod path detection status ============ -->
   <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod folder found</value></data>
   <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod folder not found</value></data>
@@ -98,6 +112,8 @@
   <data name="Main_OpenDownloadsFolder" xml:space="preserve"><value>⬇ Downloads folder</value></data>
   <data name="Main_Settings" xml:space="preserve"><value>⚙ Settings</value></data>
   <data name="Main_About" xml:space="preserve"><value>ⓘ About</value></data>
+  <data name="Main_Backup" xml:space="preserve"><value>💾 Backup</value></data>
+  <data name="Main_Restore" xml:space="preserve"><value>📂 Restore</value></data>
   <!--
     Suffix-Strategie für Zähler: XAML rendert die Zahl direkt aus dem Binding
     und den Suffix aus dem lokalisierten Wrapper — dadurch bleibt Live-

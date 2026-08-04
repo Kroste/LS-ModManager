@@ -70,6 +70,7 @@ public partial class App : Application
         services.AddSingleton<ModPathService>();
         services.AddSingleton<ModDescReader>();
         services.AddSingleton<ModInstallService>();
+        services.AddSingleton<ModBackupService>();
         services.AddSingleton<ModHubService>();
         services.AddSingleton<ModhosterCatalogService>();
         services.AddSingleton<HofHirschfeldCatalogService>();

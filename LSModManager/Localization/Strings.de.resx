@@ -56,6 +56,19 @@
   <data name="Status_DownloadDeleted" xml:space="preserve"><value>Gelöscht: {0}</value></data>
   <data name="Status_DownloadInstalled" xml:space="preserve"><value>✓ Installiert: {0}</value></data>
 
+  <data name="Status_BackupNoMods" xml:space="preserve"><value>Keine installierten Mods — nichts zu sichern.</value></data>
+  <data name="Status_BackupCreating" xml:space="preserve"><value>Erstelle Backup ({0}/{1}): {2} …</value></data>
+  <data name="Status_BackupCreated" xml:space="preserve"><value>✓ Backup erstellt: {0} Mods, {1:F1} MB → {2}</value></data>
+  <data name="Status_BackupFailed" xml:space="preserve"><value>Backup-Fehler: {0}</value></data>
+  <data name="Status_RestoreReading" xml:space="preserve"><value>Lese Backup-Manifest …</value></data>
+  <data name="Status_Restoring" xml:space="preserve"><value>Restore ({0}/{1}): {2} …</value></data>
+  <data name="Status_RestoreDone" xml:space="preserve"><value>✓ Restore abgeschlossen: {0} wiederhergestellt, {1} übersprungen (siehe Log).</value></data>
+  <data name="Status_RestoreFailed" xml:space="preserve"><value>Restore-Fehler: {0}</value></data>
+  <data name="Backup_SaveDialogTitle" xml:space="preserve"><value>Backup speichern</value></data>
+  <data name="Backup_FileTypeLabel" xml:space="preserve"><value>LS-ModManager-Backup (*.zip)</value></data>
+  <data name="Backup_DefaultFileName" xml:space="preserve"><value>LSModManager-Backup-{0}.zip</value></data>
+  <data name="Restore_OpenDialogTitle" xml:space="preserve"><value>Backup wiederherstellen</value></data>
+
   <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod-Ordner gefunden</value></data>
   <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod-Ordner nicht gefunden</value></data>
 
@@ -83,6 +96,8 @@
   <data name="Main_OpenDownloadsFolder" xml:space="preserve"><value>⬇ Downloads-Ordner</value></data>
   <data name="Main_Settings" xml:space="preserve"><value>⚙ Einstellungen</value></data>
   <data name="Main_About" xml:space="preserve"><value>ⓘ Über</value></data>
+  <data name="Main_Backup" xml:space="preserve"><value>💾 Backup</value></data>
+  <data name="Main_Restore" xml:space="preserve"><value>📂 Restore</value></data>
   <data name="Statusbar_InstalledCountSuffix" xml:space="preserve"><value>installiert</value></data>
 
   <data name="Tab_Installed" xml:space="preserve"><value>📦 Installiert</value></data>

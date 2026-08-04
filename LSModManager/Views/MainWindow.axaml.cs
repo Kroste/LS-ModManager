@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using LSModManager.Localization;
 using LSModManager.Services;
 using LSModManager.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -137,6 +138,60 @@ public partial class MainWindow : ChromeWindow
         var updates = app.Services.GetRequiredService<UpdateService>();
         var window = new AboutWindow(updates);
         _ = window.ShowDialog(this);
+    }
+
+    private async void OnBackupClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        try
+        {
+            var suggestedName = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                L.T("Backup_DefaultFileName"),
+                DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = L.T("Backup_SaveDialogTitle"),
+                SuggestedFileName = suggestedName,
+                DefaultExtension = "zip",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType(L.T("Backup_FileTypeLabel")) { Patterns = new[] { "*.zip" } },
+                },
+            });
+            var picked = file?.TryGetLocalPath();
+            if (string.IsNullOrWhiteSpace(picked)) return;
+            await vm.CreateBackupAsync(picked);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Backup-Dialog fehlgeschlagen");
+        }
+    }
+
+    private async void OnRestoreClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        try
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = L.T("Restore_OpenDialogTitle"),
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType(L.T("Backup_FileTypeLabel")) { Patterns = new[] { "*.zip" } },
+                    FilePickerFileTypes.All,
+                },
+            });
+            var picked = files.Count > 0 ? files[0].TryGetLocalPath() : null;
+            if (string.IsNullOrWhiteSpace(picked)) return;
+            await vm.RestoreBackupAsync(picked);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Restore-Dialog fehlgeschlagen");
+        }
     }
 
     private async void OnBulkEnableClick(object? sender, RoutedEventArgs e) =>

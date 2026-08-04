@@ -9,6 +9,7 @@ namespace LSModManager.Tests;
 /// Verifiziert die Kroste-Persistenz-Regel: defekte Config-Datei wird als
 /// <c>.broken</c> gesichert, nicht kommentarlos überschrieben.
 /// </summary>
+[Collection("EnvironmentIsolation")]
 public sealed class AppSettingsBrokenBackupTests : IDisposable
 {
     private readonly string _tempConfigDir;

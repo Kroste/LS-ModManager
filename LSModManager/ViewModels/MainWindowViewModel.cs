@@ -20,6 +20,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     private readonly ModInstallService _install;
+    private readonly ModBackupService _backup;
     private readonly ModPathService _paths;
     private readonly ModHubService _hub;
     private readonly ModhosterCatalogService _modhoster;
@@ -38,6 +39,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(
         ModInstallService install,
+        ModBackupService backup,
         ModPathService paths,
         ModHubService hub,
         ModhosterCatalogService modhoster,
@@ -46,6 +48,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         UpdateService updates)
     {
         _install = install;
+        _backup = backup;
         _paths = paths;
         _hub = hub;
         _modhoster = modhoster;
@@ -308,6 +311,64 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanInstallFromZip() => !IsBusy && !string.IsNullOrWhiteSpace(ModPath);
+
+    // ---- Backup / Restore ----
+
+    /// <summary>
+    /// Sichert alle Mods aus dem Mod-Ordner (aktiv + deaktiviert) in ein
+    /// selbstenthaltenes ZIP-Archiv am gewählten Zielpfad. Progress und
+    /// Endstatus laufen über die Statusbar.
+    /// </summary>
+    public async Task CreateBackupAsync(string targetZipPath)
+    {
+        if (string.IsNullOrWhiteSpace(targetZipPath)) return;
+        try
+        {
+            IsBusy = true;
+            var progress = new Progress<BackupProgress>(p =>
+                StatusText = L.F("Status_BackupCreating", p.Current, p.Total, p.CurrentFileName));
+            var result = await _backup.CreateBackupAsync(targetZipPath, progress);
+            var mb = result.FileSizeBytes / (1024d * 1024d);
+            StatusText = L.F("Status_BackupCreated", result.ModCount, mb, result.FilePath);
+        }
+        catch (InvalidOperationException)
+        {
+            // Spezifisch: „keine Mods" — eigener Text statt generisches „Fehler".
+            StatusText = L.T("Status_BackupNoMods");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Backup fehlgeschlagen: {p}", targetZipPath);
+            StatusText = L.F("Status_BackupFailed", ex.Message);
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// Stellt ein Backup wieder her: liest das Manifest, entpackt die enthaltenen
+    /// Mod-ZIPs in den Mod-Ordner und setzt den Enabled-State pro Mod aus dem
+    /// Manifest. Bestehende Dateien werden überschrieben.
+    /// </summary>
+    public async Task RestoreBackupAsync(string backupZipPath)
+    {
+        if (string.IsNullOrWhiteSpace(backupZipPath)) return;
+        try
+        {
+            IsBusy = true;
+            StatusText = L.T("Status_RestoreReading");
+            var progress = new Progress<BackupProgress>(p =>
+                StatusText = L.F("Status_Restoring", p.Current, p.Total, p.CurrentFileName));
+            var result = await _backup.RestoreBackupAsync(backupZipPath, progress);
+            await RefreshInstalledAsync();
+            StatusText = L.F("Status_RestoreDone", result.RestoredCount, result.SkippedCount);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Restore fehlgeschlagen: {p}", backupZipPath);
+            StatusText = L.F("Status_RestoreFailed", ex.Message);
+        }
+        finally { IsBusy = false; }
+    }
 
     /// <summary>
     /// Installiert mehrere ZIPs am Stück (typisch: Drag-and-Drop von mehreren
