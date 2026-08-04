@@ -201,18 +201,25 @@ public sealed class ModInstallService
 
     /// <summary>
     /// Reihenfolge fürs Preview-Bild:
-    /// 1. Wenn <see cref="ModDescReader"/> PNG-Bytes aus der ZIP extrahiert hat → cachen und nutzen.
-    /// 2. Wenn schon ein Cache-Bild existiert (z.B. vom ModHub-Cover) → dieses nutzen.
+    /// 1. Wenn schon ein Cache-Bild existiert (z.B. vom ModHub-Cover-Download) →
+    ///    dieses nutzen. CDN-Cover ist praktisch immer besser als das ZIP-Icon.
+    /// 2. Sonst: PNG aus der ZIP cachen und nutzen.
     /// 3. Sonst null → UI zeigt Fallback-Emoji.
     /// </summary>
     private static string? ResolvePreview(string modFilePath, byte[]? pngBytes)
     {
+        // Vorrang: existierender Cache. Wenn ein CDN-Cover vorhanden ist,
+        // NICHT mit dem ZIP-internen icon.png überschreiben — viele Mods haben
+        // dort leere Grayscale-Platzhalter, die die echte Preview verdecken
+        // würden.
+        var existing = AppPaths.FindExistingPreview(modFilePath);
+        if (existing is not null) return existing;
+
         if (pngBytes is { Length: > 0 })
         {
             var ext = AppPaths.GuessImageExtension(pngBytes);
             // Sicherheitsnetz: kein Bild-Format erkannt → NICHT schreiben, sonst
-            // landen DDS-Bytes o.ä. als .bin im Cache und Auto-Delete kickt in
-            // Endlosschleife.
+            // landen DDS-Bytes o.ä. als .bin im Cache.
             if (ext != ".bin")
             {
                 var target = AppPaths.PreviewCacheBasePathFor(modFilePath) + ext;
@@ -227,6 +234,6 @@ public sealed class ModInstallService
                 }
             }
         }
-        return AppPaths.FindExistingPreview(modFilePath);
+        return null;
     }
 }

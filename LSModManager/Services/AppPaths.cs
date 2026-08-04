@@ -49,11 +49,17 @@ public static class AppPaths
     /// Bild-Extension sie hat. Nötig, weil Avalonia/Skia auf Linux ein JPG NICHT
     /// laden kann, wenn es .png-Endung hat — wir speichern es also mit der echten
     /// Extension und suchen beim Load beide.
+    /// <para>
+    /// Priorität: <c>.jpg</c>/<c>.jpeg</c> zuerst (das sind CDN-Cover vom
+    /// ModHub-Download — kuratiert, immer aussagekräftig). <c>.png</c> danach
+    /// (aus der ZIP extrahiert — bei vielen Mods leerer Platzhalter oder
+    /// reines Grayscale-Icon, deshalb schlechter als CDN-Cover).
+    /// </para>
     /// </summary>
     public static string? FindExistingPreview(string zipPath)
     {
         var basePath = PreviewCacheBasePathFor(zipPath);
-        foreach (var ext in new[] { ".png", ".jpg", ".jpeg" })
+        foreach (var ext in new[] { ".jpg", ".jpeg", ".png" })
         {
             var p = basePath + ext;
             if (File.Exists(p)) return p;
