@@ -243,8 +243,8 @@
                                                     <Border Background="{DynamicResource KrosteAccentSoftBrush}"
                                                             CornerRadius="10" Padding="8,1"
                                                             VerticalAlignment="Center"
-                                                            IsVisible="{Binding IsModhosterSource}">
-                                                        <TextBlock Text="Modhoster" FontSize="10"
+                                                            IsVisible="{Binding NeedsBrowser}">
+                                                        <TextBlock Text="{Binding SourceLabel}" FontSize="10"
                                                                    Foreground="{DynamicResource KrosteSecondaryTextBrush}" />
                                                     </Border>
                                                 </StackPanel>

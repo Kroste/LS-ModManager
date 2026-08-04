@@ -17,8 +17,13 @@ public sealed class ModHubItemViewModel : ObservableObject
     public string? Version => Model.Version;
     public string? SizeText => Model.SizeText;
 
-    /// <summary>„GIANTS" oder „Modhoster" — für das Source-Badge in der Card.</summary>
-    public string SourceLabel => Model.Source == ModHubEntry.ModhosterSource ? "Modhoster" : "GIANTS";
+    /// <summary>Menschlich lesbares Label für die Card („GIANTS", „Modhoster", „Hof Hirschfeld").</summary>
+    public string SourceLabel => Model.Source switch
+    {
+        ModHubEntry.ModhosterSource => "Modhoster",
+        ModHubEntry.HofHirschfeldSource => "Hof Hirschfeld",
+        _ => "GIANTS",
+    };
     public bool IsGiantsSource => Model.Source == ModHubEntry.GiantsSource;
     public bool IsModhosterSource => Model.Source == ModHubEntry.ModhosterSource;
 

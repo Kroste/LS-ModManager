@@ -22,4 +22,5 @@ public sealed record ModHubEntry(
 {
     public const string GiantsSource = "GiantsModHub";
     public const string ModhosterSource = "Modhoster";
+    public const string HofHirschfeldSource = "Hof Hirschfeld";
 }

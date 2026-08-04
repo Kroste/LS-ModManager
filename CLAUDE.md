@@ -53,6 +53,15 @@
     `Referer`-Header setzen** — GIANTS-CDN blockt sonst mit HTTP 403 (auch für
     Preview-Bilder!). Der `UrlImageBehavior` und der `_http` im Service haben
     beide `Referer: https://www.farming-simulator.com/` als Default.
+  - `HofHirschfeldCatalogService`: dritte Katalog-Quelle
+    (`hof-hirschfeld.de`, Community-„Hirschfeld-Version"-Umbauten für LS25).
+    Kein zentraler Endpoint — wir parsen die Startseite auf Kategorie-Slugs
+    und iterieren pro Kategorie über die Paginierung (12 Mods pro Seite,
+    typisch 1-2 Seiten pro Kategorie). HTML-Parsing mit HtmlAgilityPack
+    (Karten sind `a.mod-card__media` mit `<img>` darin). Kein In-App-
+    Download — die Site versteckt Downloads hinter einem Werbung-Consent-
+    Overlay; wir öffnen die Detail-Seite im Browser. Author fix
+    „Hof Hirschfeld", `Source = HofHirschfeldSource`.
   - `ModhosterCatalogService`: zweite Katalog-Quelle über die offene JSON-API
     `modhoster.de/mods.json?game_id=1` (game_id=1 ist bei modhoster LS25).
     24 Mods pro Seite, sequenzielles Paging mit 300 ms Delay. Kein In-App-

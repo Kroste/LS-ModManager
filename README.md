@@ -14,14 +14,16 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
 - **📦 Mods installieren:** ZIP auswählen oder direkt aus dem ModHub-Katalog
   herunterladen — die App kopiert die Datei in den korrekten LS25-Mod-Ordner
   und liest Titel/Autor/Version/Beschreibung aus der `modDesc.xml`.
-- **🌐 Zwei Katalog-Quellen in einem Tab:** Der komplette offizielle Katalog
-  von [farming-simulator.com/mods.php](https://www.farming-simulator.com/mods.php)
+- **🌐 Drei Katalog-Quellen in einem Tab:** Der offizielle GIANTS-Katalog von
+  [farming-simulator.com/mods.php](https://www.farming-simulator.com/mods.php)
   (~4800 Mods) **plus** der Community-Katalog von
-  [modhoster.de](https://www.modhoster.de/spiel/ls-25). Beide werden beim
-  ersten Start parallel im Hintergrund geladen und persistent gecacht —
-  Suche und Filtern sind danach instant. Modhoster-Einträge sind mit einem
-  Badge markiert und öffnen für den Download den Browser (Login-Pflicht bei
-  modhoster).
+  [modhoster.de](https://www.modhoster.de/spiel/ls-25) **plus** die
+  „Hirschfeld-Version"-Community-Umbauten von
+  [hof-hirschfeld.de](https://www.hof-hirschfeld.de/). Alle drei werden beim
+  ersten Start parallel im Hintergrund geladen und persistent gecacht — Suche
+  und Filtern sind danach instant. Community-Einträge sind mit einem Source-
+  Badge markiert („Modhoster" / „Hof Hirschfeld") und öffnen für den Download
+  den Browser (die beiden Community-Seiten verlangen Login bzw. Werbe-Consent).
 - **🔍 Suche und Kategorien:** Live-Textfilter (Titel/Autor/Kategorie) plus
   Auswahl aus den 154 GIANTS-Kategorien (Karten, Traktoren, Anhänger, …).
 - **📥 Direkt herunterladen:** „Herunterladen"-Button pro Katalog-Karte lädt

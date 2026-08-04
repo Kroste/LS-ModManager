@@ -64,6 +64,7 @@ public partial class App : Application
         services.AddSingleton<ModInstallService>();
         services.AddSingleton<ModHubService>();
         services.AddSingleton<ModhosterCatalogService>();
+        services.AddSingleton<HofHirschfeldCatalogService>();
         services.AddSingleton<UpdateService>();
 
         // ViewModels (transient — jedes Fenster bekommt seins)

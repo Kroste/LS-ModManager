@@ -22,6 +22,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ModPathService _paths;
     private readonly ModHubService _hub;
     private readonly ModhosterCatalogService _modhoster;
+    private readonly HofHirschfeldCatalogService _hofHirschfeld;
     private readonly AppSettingsService _settings;
     private readonly UpdateService _updates;
 
@@ -39,6 +40,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ModPathService paths,
         ModHubService hub,
         ModhosterCatalogService modhoster,
+        HofHirschfeldCatalogService hofHirschfeld,
         AppSettingsService settings,
         UpdateService updates)
     {
@@ -46,6 +48,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _paths = paths;
         _hub = hub;
         _modhoster = modhoster;
+        _hofHirschfeld = hofHirschfeld;
         _settings = settings;
         _updates = updates;
 
@@ -801,11 +804,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             }
 
             StatusText = $"Katalog: {_allCatalog.Count} Einträge (Seite 1), Rest wird nachgeladen …";
-            // Beide Katalog-Quellen parallel im Hintergrund — GIANTS ist langsamer
-            // (~1-2 min), Modhoster ist über JSON-API deutlich schneller und
-            // wird so bereits nach wenigen Sekunden sichtbar.
+            // Alle drei Katalog-Quellen parallel im Hintergrund. GIANTS ist am
+            // langsamsten (~1-2 min HTML-Scraping), Modhoster ist JSON und schnell,
+            // Hof-Hirschfeld ist kleiner Community-Katalog (~30 Kategorien).
             _ = LoadAllRemainingPagesAsync(_fullLoadCts.Token);
             _ = LoadModhosterCatalogAsync(_fullLoadCts.Token);
+            _ = LoadHofHirschfeldCatalogAsync(_fullLoadCts.Token);
         }
         catch (Exception ex)
         {
@@ -963,6 +967,72 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (OperationCanceledException) { /* ok */ }
         catch (Exception ex) { Log.Warn(ex, "Modhoster-Full-Load Fehler"); }
+    }
+
+    /// <summary>
+    /// Lädt den kompletten hof-hirschfeld.de-Katalog: pro Kategorie alle
+    /// Seiten. Mischt die Einträge in <see cref="_allCatalog"/>. Alle Cards
+    /// haben <c>CanInAppDownload=false</c> — die Site verlangt Werbung-Consent
+    /// für Downloads.
+    /// </summary>
+    private async Task LoadHofHirschfeldCatalogAsync(CancellationToken ct)
+    {
+        try
+        {
+            var slugs = await _hofHirschfeld.FetchCategorySlugsAsync(ct).ConfigureAwait(false);
+            var totalAdded = 0;
+            foreach (var slug in slugs)
+            {
+                if (ct.IsCancellationRequested) break;
+                // Erste Seite → auch pagination-Analyse extrahieren.
+                var page = 1;
+                while (!ct.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(300), ct).ConfigureAwait(false);
+                    var entries = await _hofHirschfeld.FetchCategoryPageAsync(slug, page, ct)
+                        .ConfigureAwait(false);
+                    if (entries.Count == 0) break;
+
+                    var newlyAdded = new List<ModHubEntry>();
+                    int total;
+                    lock (_catalogLock)
+                    {
+                        var existingUrls = new HashSet<string>(_allCatalog.Select(e => e.DetailUrl));
+                        foreach (var e in entries)
+                        {
+                            if (existingUrls.Add(e.DetailUrl))
+                            {
+                                _allCatalog.Add(e);
+                                newlyAdded.Add(e);
+                            }
+                        }
+                        totalAdded += newlyAdded.Count;
+                        total = _allCatalog.Count;
+                    }
+
+                    var currentPage = page;
+                    var currentSlug = slug;
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        AppendToCatalogView(newlyAdded);
+                        StatusText = $"Katalog: {total} (Hof Hirschfeld: {currentSlug} S{currentPage}) …";
+                    });
+
+                    // Nur weiter blättern wenn Seite voll war (12 pro Seite typisch).
+                    if (entries.Count < 12) break;
+                    page++;
+                    if (page > 20) break; // Safety-Limit pro Kategorie
+                }
+            }
+
+            int finalTotal;
+            lock (_catalogLock) finalTotal = _allCatalog.Count;
+            Log.Info("Hof-Hirschfeld-Full-Load fertig: +{n} neue, {t} gesamt", totalAdded, finalTotal);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                StatusText = $"Katalog: {finalTotal} Einträge (GIANTS + Modhoster + Hof Hirschfeld).");
+        }
+        catch (OperationCanceledException) { /* ok */ }
+        catch (Exception ex) { Log.Warn(ex, "Hof-Hirschfeld-Full-Load Fehler"); }
     }
 
     private void SaveCatalogSnapshot(string language)
