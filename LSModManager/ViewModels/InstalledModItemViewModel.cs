@@ -10,7 +10,7 @@ namespace LSModManager.ViewModels;
 /// UI-Adapter für einen installierten Mod. Kapselt Anzeige-Format
 /// (Größe in MB, Titel-Fallback, Bitmap-Load) — hält das MainVM sauber.
 /// </summary>
-public sealed class InstalledModItemViewModel : ObservableObject
+public sealed partial class InstalledModItemViewModel : ObservableObject
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
@@ -22,6 +22,15 @@ public sealed class InstalledModItemViewModel : ObservableObject
 
     public InstalledMod Model { get; }
     public Bitmap? Preview { get; }
+
+    /// <summary>Wird von der Update-Prüfung gesetzt, wenn eine neuere Version im Katalog steht.</summary>
+    [ObservableProperty]
+    private string? _updateAvailableVersion;
+
+    public bool HasUpdate => !string.IsNullOrWhiteSpace(UpdateAvailableVersion);
+    partial void OnUpdateAvailableVersionChanged(string? value) => OnPropertyChanged(nameof(HasUpdate));
+
+    public void SetUpdateAvailable(string newVersion) => UpdateAvailableVersion = newVersion;
 
     public string DisplayTitle => Model.Metadata?.Title is { Length: > 0 } t
         ? t
@@ -45,7 +54,11 @@ public sealed class InstalledModItemViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "Preview-Load fehlgeschlagen: {p}", path);
+            // Cache-Datei ist korrupt (z.B. Altlasten aus einer früheren App-Version
+            // mit anderem Format). Löschen, damit der nächste Refresh sie neu holt
+            // oder still auf den Emoji-Fallback zurückfällt.
+            Log.Debug(ex, "Preview-Load fehlgeschlagen — lösche kaputten Cache: {p}", path);
+            try { File.Delete(path); } catch { /* best-effort */ }
             return null;
         }
     }

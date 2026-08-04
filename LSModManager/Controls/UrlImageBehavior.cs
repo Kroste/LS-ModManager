@@ -36,6 +36,8 @@ public static class UrlImageBehavior
     {
         var c = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         c.DefaultRequestHeaders.UserAgent.ParseAdd("LSModManager (+https://github.com/Kroste/LS-ModManager)");
+        // GIANTS-CDN gibt Assets nur mit korrektem Referer frei — sonst HTTP 403.
+        c.DefaultRequestHeaders.Referrer = new Uri("https://www.farming-simulator.com/");
         return c;
     }
 

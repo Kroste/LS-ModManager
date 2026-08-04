@@ -1,0 +1,107 @@
+<views:ChromeWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:LSModManager.Views"
+        xmlns:controls="using:LSModManager.Controls"
+        xmlns:vm="using:LSModManager.ViewModels"
+        x:Class="LSModManager.Views.ModDetailWindow"
+        x:DataType="vm:ModDetailViewModel"
+        Width="820" Height="720"
+        MinWidth="600" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        Title="Mod-Details"
+        Background="{DynamicResource KrosteBackgroundBrush}">
+
+    <DockPanel>
+        <controls:TitleBar DockPanel.Dock="Top" Title="{Binding Title}" />
+
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom" Padding="20,10"
+                Background="{DynamicResource KrosteTitleBarBrush}"
+                BorderBrush="{DynamicResource KrosteBorderBrush}" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Classes="muted" />
+                <ProgressBar Grid.Column="1" IsIndeterminate="True"
+                             Width="120" Margin="12,0"
+                             IsVisible="{Binding IsLoading}" />
+                <Button Grid.Column="2" Content="🌐 Im Browser"
+                        Margin="0,0,8,0"
+                        Command="{Binding OpenInBrowserCommand}" />
+                <Button Grid.Column="3" Classes="accent" Content="📥 Herunterladen"
+                        Command="{Binding DownloadCommand}" />
+            </Grid>
+        </Border>
+
+        <ScrollViewer Padding="20,16">
+            <StackPanel Spacing="14">
+                <!-- Header -->
+                <Border Classes="card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{Binding Title}" Classes="h1" FontSize="22" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{Binding Author}" Classes="muted" />
+                            <TextBlock Text="·" Classes="muted"
+                                       IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding Category}" Classes="muted" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding Version, StringFormat='v{0}'}" Classes="secondary" FontSize="12"
+                                       IsVisible="{Binding Version, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding SizeText}" Classes="secondary" FontSize="12"
+                                       IsVisible="{Binding SizeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding ReleaseDate}" Classes="secondary" FontSize="12"
+                                       IsVisible="{Binding ReleaseDate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding Platform}" Classes="secondary" FontSize="12"
+                                       IsVisible="{Binding Platform, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            <TextBlock Text="{Binding Rating, StringFormat='⭐ {0}'}" Classes="secondary" FontSize="12"
+                                       Foreground="{DynamicResource KrosteGoldBrush}"
+                                       IsVisible="{Binding Rating, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Screenshots -->
+                <Border Classes="card"
+                        IsVisible="{Binding ScreenshotUrls.Count}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="SCREENSHOTS" Classes="section-label" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding ScreenshotUrls}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="10" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="360" Height="200"
+                                                Background="{DynamicResource KrosteSurfaceBrush}"
+                                                CornerRadius="6" ClipToBounds="True">
+                                            <Image controls:UrlImageBehavior.Url="{Binding}"
+                                                   Stretch="UniformToFill" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <!-- Beschreibung -->
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="BESCHREIBUNG" Classes="section-label" />
+                        <TextBox Text="{Binding Description, Mode=OneWay}"
+                                 IsReadOnly="True"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="0"
+                                 MinHeight="200" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</views:ChromeWindow>

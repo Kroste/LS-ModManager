@@ -62,19 +62,28 @@
                     <StackPanel Spacing="8">
                         <TextBlock Classes="h2" Text="ModHub-Katalog" />
                         <TextBlock Classes="muted" FontSize="12"
-                                   Text="Sprache, in der die Kategorien und Titel von farming-simulator.com geladen werden." />
+                                   Text="Sprache und Cache-Verhalten für den ModHub-Katalog." />
 
                         <StackPanel Spacing="2">
                             <TextBlock Text="Sprache" Classes="section-label" />
-                            <ComboBox SelectedItem="{Binding CatalogLanguage}" Width="200"
-                                      HorizontalAlignment="Left">
-                                <ComboBoxItem>de</ComboBoxItem>
-                                <ComboBoxItem>en</ComboBoxItem>
-                                <ComboBoxItem>fr</ComboBoxItem>
-                                <ComboBoxItem>es</ComboBoxItem>
-                                <ComboBoxItem>it</ComboBoxItem>
-                                <ComboBoxItem>pl</ComboBoxItem>
+                            <ComboBox ItemsSource="{Binding SupportedLanguages}"
+                                      SelectedItem="{Binding CatalogLanguage}"
+                                      Width="200" HorizontalAlignment="Left" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Katalog-Cache automatisch aktualisieren" Classes="section-label" />
+                            <ComboBox ItemsSource="{Binding RefreshOptions}"
+                                      SelectedItem="{Binding SelectedRefreshOption}"
+                                      Width="360" HorizontalAlignment="Left">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Label}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
                             </ComboBox>
+                            <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                                       Text="Beim Start wird der Cache neu geladen, wenn er älter als die eingestellte Zeit ist. „↺“ im Katalog-Tab erzwingt manuell einen Refresh." />
                         </StackPanel>
                     </StackPanel>
                 </Border>

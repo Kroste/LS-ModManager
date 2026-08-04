@@ -88,12 +88,16 @@ public sealed class ModDescReader
     /// </summary>
     private static byte[]? TryExtractPreview(ZipArchive archive, string? iconFileName)
     {
+        // Nur PNG-Kandidaten. DDS wird bewusst nicht extrahiert (Avalonia rendert
+        // kein DDS, und wenn wir DDS-Bytes als „PreviewPngBytes" durchreichen,
+        // landen die als .bin im Cache und verdecken das echte Cover.
         var candidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(iconFileName))
         {
             var withoutExt = Path.GetFileNameWithoutExtension(iconFileName);
             candidates.Add(withoutExt + ".png");
-            candidates.Add(iconFileName); // falls Nutzer PNG angibt
+            if (iconFileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                candidates.Add(iconFileName);
         }
         candidates.Add("icon.png");
 
@@ -102,17 +106,39 @@ public sealed class ModDescReader
             var entry = archive.Entries.FirstOrDefault(e =>
                 string.Equals(e.FullName, name, StringComparison.OrdinalIgnoreCase));
             if (entry is not null)
-                return ReadBytes(entry);
+                return ReadIfImage(entry);
         }
 
         var store = archive.Entries.FirstOrDefault(e =>
             e.FullName.StartsWith("store_", StringComparison.OrdinalIgnoreCase) &&
             e.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
-        if (store is not null) return ReadBytes(store);
+        if (store is not null) return ReadIfImage(store);
 
         var anyPng = archive.Entries.FirstOrDefault(e =>
             e.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
-        return anyPng is null ? null : ReadBytes(anyPng);
+        return anyPng is null ? null : ReadIfImage(anyPng);
+    }
+
+    /// <summary>
+    /// Liest die Bytes und verifiziert per Magic-Bytes, dass es wirklich PNG
+    /// oder JPG ist — schützt gegen Mods, die eine DDS-Datei fälschlich unter
+    /// einem <c>.png</c>-Namen ablegen.
+    /// </summary>
+    private static byte[]? ReadIfImage(ZipArchiveEntry entry)
+    {
+        var bytes = ReadBytes(entry);
+        if (IsPngOrJpeg(bytes)) return bytes;
+        Log.Debug("Datei {n} sieht nicht wie PNG/JPG aus — überspringe.", entry.FullName);
+        return null;
+    }
+
+    private static bool IsPngOrJpeg(byte[] b)
+    {
+        if (b.Length >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47)
+            return true; // PNG
+        if (b.Length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF)
+            return true; // JPEG
+        return false;
     }
 
     private static byte[] ReadBytes(ZipArchiveEntry entry)

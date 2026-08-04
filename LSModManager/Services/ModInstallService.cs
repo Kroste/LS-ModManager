@@ -47,9 +47,7 @@ public sealed class ModInstallService
 
             var info = new FileInfo(file);
             var readResult = _reader.Read(file);
-            string? previewPath = null;
-            if (readResult.PreviewPngBytes is { Length: > 0 })
-                previewPath = CachePreview(file, readResult.PreviewPngBytes);
+            var previewPath = ResolvePreview(file, readResult.PreviewPngBytes);
 
             result.Add(new InstalledMod(
                 FilePath: file,
@@ -87,11 +85,24 @@ public sealed class ModInstallService
         File.Copy(sourceZipPath, destination, overwrite: true);
         Log.Info("Mod installiert: {name} → {p}", fileName, destination);
 
+        // Preview-Cache vom Source-Namen zum Ziel-Namen übernehmen (dieselbe
+        // Datei-Basis — Downloads/Installiert haben identische ZIP-Namen).
+        var sourceCache = AppPaths.FindExistingPreview(sourceZipPath);
+        var targetExisting = AppPaths.FindExistingPreview(destination);
+        if (sourceCache is not null && targetExisting is null)
+        {
+            try
+            {
+                var targetCache = AppPaths.PreviewCacheBasePathFor(destination)
+                    + Path.GetExtension(sourceCache);
+                File.Copy(sourceCache, targetCache, overwrite: false);
+            }
+            catch (Exception ex) { Log.Debug(ex, "Preview-Copy übersprungen"); }
+        }
+
         var read = _reader.Read(destination);
         var info = new FileInfo(destination);
-        string? previewPath = null;
-        if (read.PreviewPngBytes is { Length: > 0 })
-            previewPath = CachePreview(destination, read.PreviewPngBytes);
+        var previewPath = ResolvePreview(destination, read.PreviewPngBytes);
         return new InstalledMod(destination, fileName, info.Length, info.LastWriteTimeUtc,
             IsEnabled: true, Metadata: read.Metadata, PreviewImagePath: previewPath,
             ReadError: read.Error);
@@ -146,39 +157,76 @@ public sealed class ModInstallService
     }
 
     /// <summary>
-    /// Schreibt das extrahierte Preview-PNG in einen Cache-Ordner. Der Pfad ist
-    /// stabil pro Mod-Datei (SHA-freier Ansatz: FileName + Length). Das entlastet
-    /// die UI, weil Avalonia den Bitmap direkt vom Dateipfad laden kann.
+    /// Listet alle ZIPs im persistenten Downloads-Ordner (heruntergeladen aber
+    /// noch nicht installiert). Analog zu <see cref="ListInstalled"/>, aber ohne
+    /// Enable/Disable — Downloads sind immer roh.
     /// </summary>
-    private static string CachePreview(string modFilePath, byte[] pngBytes)
+    public IReadOnlyList<InstalledMod> ListDownloaded()
     {
-        var cacheDir = Path.Combine(GetCacheRoot(), "previews");
-        Directory.CreateDirectory(cacheDir);
-        var name = Path.GetFileNameWithoutExtension(modFilePath) + ".png";
-        var target = Path.Combine(cacheDir, name);
-        try
+        var dir = AppPaths.DownloadsDir;
+        var result = new List<InstalledMod>();
+        foreach (var file in Directory.EnumerateFiles(dir, "*.zip"))
         {
-            File.WriteAllBytes(target, pngBytes);
-            return target;
+            var info = new FileInfo(file);
+            var readResult = _reader.Read(file);
+            var previewPath = ResolvePreview(file, readResult.PreviewPngBytes);
+
+            result.Add(new InstalledMod(
+                FilePath: file,
+                FileName: Path.GetFileName(file),
+                FileSizeBytes: info.Length,
+                InstalledUtc: info.LastWriteTimeUtc,
+                IsEnabled: true, // Downloads sind „aktiv" im Sinne von „bereit"
+                Metadata: readResult.Metadata,
+                PreviewImagePath: previewPath,
+                ReadError: readResult.Error));
         }
-        catch (Exception ex)
-        {
-            Log.Warn(ex, "Konnte Preview nicht cachen: {p}", target);
-            return target;
-        }
+        return result;
     }
 
-    private static string GetCacheRoot()
+    public void DeleteDownload(string filePath)
     {
-        if (OperatingSystem.IsWindows())
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "LSModManager", "cache");
-        var xdg = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
-        if (string.IsNullOrWhiteSpace(xdg))
-            xdg = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".cache");
-        return Path.Combine(xdg, "LSModManager");
+        if (!File.Exists(filePath))
+        {
+            Log.Warn("Download bereits weg: {p}", filePath);
+            return;
+        }
+        // Sicherheitscheck: nur Dateien im Downloads-Ordner löschen dürfen.
+        var normalized = Path.GetFullPath(filePath);
+        if (!normalized.StartsWith(AppPaths.DownloadsDir, StringComparison.Ordinal))
+            throw new InvalidOperationException("Datei liegt nicht im Downloads-Ordner");
+        File.Delete(normalized);
+        Log.Info("Download gelöscht: {p}", normalized);
+    }
+
+    /// <summary>
+    /// Reihenfolge fürs Preview-Bild:
+    /// 1. Wenn <see cref="ModDescReader"/> PNG-Bytes aus der ZIP extrahiert hat → cachen und nutzen.
+    /// 2. Wenn schon ein Cache-Bild existiert (z.B. vom ModHub-Cover) → dieses nutzen.
+    /// 3. Sonst null → UI zeigt Fallback-Emoji.
+    /// </summary>
+    private static string? ResolvePreview(string modFilePath, byte[]? pngBytes)
+    {
+        if (pngBytes is { Length: > 0 })
+        {
+            var ext = AppPaths.GuessImageExtension(pngBytes);
+            // Sicherheitsnetz: kein Bild-Format erkannt → NICHT schreiben, sonst
+            // landen DDS-Bytes o.ä. als .bin im Cache und Auto-Delete kickt in
+            // Endlosschleife.
+            if (ext != ".bin")
+            {
+                var target = AppPaths.PreviewCacheBasePathFor(modFilePath) + ext;
+                try
+                {
+                    File.WriteAllBytes(target, pngBytes);
+                    return target;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Konnte Preview nicht cachen: {p}", target);
+                }
+            }
+        }
+        return AppPaths.FindExistingPreview(modFilePath);
     }
 }
