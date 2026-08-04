@@ -78,7 +78,9 @@ chmod +x LSModManager-*-x86_64.AppImage
 2. **Installierte Mods verwalten (Tab „📦 Installiert"):** Live-Suche oben
    (Titel/Autor/Dateiname). Karten mit Icon, Titel, Autor, Version, Status.
    Pro Karte rechts: „⏻ (De-)Aktivieren", „🗑 Deinstallieren", und bei
-   verfügbarem Update zusätzlich „⬇ Update installieren".
+   verfügbarem Update zusätzlich „⬇ Update installieren". **Mehrere Mods
+   markieren** (Ctrl-Klick / Shift-Klick) blendet oben eine Bulk-Leiste
+   ein: „⏻ Alle aktivieren / deaktivieren / 🗑 alle deinstallieren".
 3. **Neue Mods entdecken (Tab „🌐 ModHub-Katalog"):** Kategorie-Dropdown +
    Live-Suche links. Pro Karte „📥 Herunterladen" (lädt direkt in den
    Downloads-Ordner) und „👁 Details" (Detailfenster mit Screenshots und
