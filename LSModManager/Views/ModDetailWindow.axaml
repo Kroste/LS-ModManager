@@ -60,6 +60,20 @@
                     </StackPanel>
                 </Border>
 
+                <!-- KI-Toolbar direkt unter dem Header, damit die Buttons sofort
+                     sichtbar sind (die Beschreibung darunter kann bei Community-
+                     Mods sehr lang sein und die Ergebnis-Cards unten außer Sicht
+                     drücken). Card verschwindet komplett wenn kein KI-Provider
+                     konfiguriert ist. -->
+                <Border Classes="card" IsVisible="{Binding IsAiEnabled}" Padding="12,10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="{loc:Tr ModDetail_AiSummarize}"
+                                Command="{Binding SummarizeCommand}" />
+                        <Button Content="{loc:Tr ModDetail_AiSimilarLoad}"
+                                Command="{Binding FindSimilarModsCommand}" />
+                    </StackPanel>
+                </Border>
+
                 <!-- Screenshots -->
                 <Border Classes="card"
                         IsVisible="{Binding ScreenshotUrls.Count}">
@@ -91,15 +105,7 @@
                 <!-- Beschreibung -->
                 <Border Classes="card">
                     <StackPanel Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="{loc:Tr ModDetail_Description}" Classes="section-label" />
-                            <!-- Zusammenfassen-Button nur wenn KI konfiguriert. Bei laufender
-                                 Anfrage disabled + Text-Wechsel. -->
-                            <Button Grid.Column="1" Classes="ghost" FontSize="12" Padding="8,2"
-                                    Content="{loc:Tr ModDetail_AiSummarize}"
-                                    Command="{Binding SummarizeCommand}"
-                                    IsVisible="{Binding IsAiEnabled}" />
-                        </Grid>
+                        <TextBlock Text="{loc:Tr ModDetail_Description}" Classes="section-label" />
                         <TextBox Text="{Binding Description, Mode=OneWay}"
                                  IsReadOnly="True"
                                  AcceptsReturn="True"
@@ -121,17 +127,13 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Ähnliche Mods: Card immer sichtbar wenn KI aktiv. Button startet Suche;
-                     Ergebnisse als Mini-Cards mit Klick auf Browser. -->
-                <Border Classes="card" IsVisible="{Binding IsAiEnabled}">
+                <!-- Ähnliche Mods: Card taucht auf sobald Ergebnisse (oder ein
+                     „nichts gefunden"-Signal) da sind. Der Auslöse-Button sitzt
+                     oben in der KI-Toolbar-Card unter dem Header. -->
+                <Border Classes="card" IsVisible="{Binding HasSimilarResults}">
                     <StackPanel Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="{loc:Tr ModDetail_AiSimilar}" Classes="section-label"
-                                       Foreground="{DynamicResource KrosteGoldBrush}" />
-                            <Button Grid.Column="1" Classes="ghost" FontSize="12" Padding="8,2"
-                                    Content="{loc:Tr ModDetail_AiSimilarLoad}"
-                                    Command="{Binding FindSimilarModsCommand}" />
-                        </Grid>
+                        <TextBlock Text="{loc:Tr ModDetail_AiSimilar}" Classes="section-label"
+                                   Foreground="{DynamicResource KrosteGoldBrush}" />
                         <TextBlock Text="{loc:Tr ModDetail_AiSimilarNone}"
                                    Classes="muted" FontSize="12"
                                    IsVisible="{Binding SimilarNoResults}" />

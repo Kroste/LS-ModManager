@@ -92,6 +92,13 @@ public sealed partial class ModDetailViewModel : ObservableObject
     public ObservableCollection<ModHubItemViewModel> SimilarMods { get; } = new();
     [ObservableProperty] private bool _similarNoResults;
 
+    /// <summary>True sobald eine Empfehlung gelaufen ist — steuert Sichtbarkeit
+    /// der Ergebnis-Card. Bei laufender Suche schon true (dann sieht der User
+    /// den „nichts gefunden"-Text nicht, aber die leere Card kurz während der
+    /// Suche — akzeptabel, verhindert Flicker beim Erscheinen der Ergebnisse).</summary>
+    public bool HasSimilarResults => SimilarMods.Count > 0 || SimilarNoResults;
+    partial void OnSimilarNoResultsChanged(bool value) => OnPropertyChanged(nameof(HasSimilarResults));
+
     // ---- Init und Basis-Commands -------------------------------------------
 
     public async Task InitializeAsync()
@@ -203,6 +210,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
             IsSearchingSimilar = true;
             SimilarMods.Clear();
             SimilarNoResults = false;
+            OnPropertyChanged(nameof(HasSimilarResults)); // ggf. Card wegblenden bei erneuter Suche
             StatusText = L.T("ModDetail_AiSimilarLoading");
 
             var candidates = _main.GetCatalogCandidatesForSimilar(Category, DetailUrl);
@@ -223,6 +231,11 @@ public sealed partial class ModDetailViewModel : ObservableObject
             foreach (var m in matches) SimilarMods.Add(new ModHubItemViewModel(m));
 
             SimilarNoResults = SimilarMods.Count == 0;
+            // Notify explizit — HasSimilarResults liest SimilarMods.Count, das
+            // wird durch OnSimilarNoResultsChanged nur getriggert wenn sich der
+            // Bool tatsächlich ändert (bei „0 Treffer" bleibt SimilarNoResults
+            // auf false wenn's vorher false war → kein Notify).
+            OnPropertyChanged(nameof(HasSimilarResults));
             StatusText = "";
             Log.Info("KI-Empfehlung: {n} ähnliche Mods für {t} (aus {c} Kandidaten)",
                 SimilarMods.Count, Title, candidates.Count);
