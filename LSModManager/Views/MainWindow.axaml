@@ -99,7 +99,11 @@
             <!-- ==== Installierte Mods ==== -->
             <TabItem Header="📦 Installiert">
                 <Border Classes="card-flat" Padding="0">
-                    <ListBox ItemsSource="{Binding InstalledMods}"
+                    <DockPanel>
+                        <TextBox DockPanel.Dock="Top" Margin="14,10,14,6"
+                                 Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="🔍  Installierte Mods filtern (Titel, Autor, Dateiname) …" />
+                        <ListBox ItemsSource="{Binding InstalledMods}"
                              SelectedItem="{Binding SelectedInstalled}"
                              Background="Transparent" BorderThickness="0"
                              Padding="10">
@@ -166,6 +170,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+                    </DockPanel>
                 </Border>
             </TabItem>
 

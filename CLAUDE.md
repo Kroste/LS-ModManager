@@ -57,8 +57,9 @@
   TabControl mit drei Tabs (Installiert / ModHub-Katalog / Downloads) +
   Statusbar mit Live-Progress. Toolbar hat „🚜 LS25 starten" (Steam-URI) und
   „🔄 Updates prüfen". Card-basierter Look, kein Fluent-Grau.
-- Installed-Tab: Card-Buttons „⏻ (De-)Aktivieren" und „🗑 Deinstallieren" pro
-  Mod, plus „⬇ Update installieren" (nur sichtbar bei HasUpdate, Katalog-
+- Installed-Tab: Live-Suche oben (Titel/Autor/Filename, filtert `_allInstalled`
+  in `InstalledMods`). Card-Buttons „⏻ (De-)Aktivieren" und „🗑 Deinstallieren"
+  pro Mod, plus „⬇ Update installieren" (nur sichtbar bei HasUpdate, Katalog-
   Match und Version-Diff). Update-Ablauf: Download neu → alte deinstallieren
   → neue installieren → Enabled-State übernehmen. Doppelklick auf Katalog-
   Card öffnet Detail-Fenster.
@@ -86,8 +87,6 @@
 - **Kurzfristig (Quick-Wins):**
   - **Drag-and-Drop von ZIPs** aufs Fenster (Installed- und Downloads-Tab),
     Avalonia-12-DataTransfer-API.
-  - **Filter/Suche für installierte Mods** — TextBox über der Installed-Liste,
-    analog Katalog.
   - **Bulk-Aktionen** — Multi-Selection in Installed-Liste + „Alle
     aktivieren/deaktivieren/deinstallieren".
 - **Mittelfristig (Kroste-Standard-Pflichten + solide Ergänzungen):**

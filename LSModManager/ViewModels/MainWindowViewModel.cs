@@ -120,6 +120,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Signal an das MainWindow: bitte ein Detail-Fenster für diesen Mod öffnen.</summary>
     public event Action<ModHubItemViewModel>? DetailRequested;
 
+    /// <summary>Rohliste aller installierten Mods (unfiltered). Wird für die Suche
+    /// verwendet; <see cref="InstalledMods"/> ist die gefilterte Sicht.</summary>
+    private readonly List<InstalledModItemViewModel> _allInstalled = new();
+
     public ObservableCollection<InstalledModItemViewModel> InstalledMods { get; } = new();
     public ObservableCollection<InstalledModItemViewModel> DownloadedMods { get; } = new();
     public ObservableCollection<ModHubItemViewModel> CatalogMods { get; } = new();
@@ -158,6 +162,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Filter-Text für den Katalog. Wird live angewandt (Titel/Autor/Kategorie).</summary>
     [ObservableProperty]
     private string _catalogSearchText = "";
+
+    /// <summary>Filter-Text für installierte Mods. Live über Titel/Autor/Filename.</summary>
+    [ObservableProperty]
+    private string _installedSearchText = "";
+
+    partial void OnInstalledSearchTextChanged(string value) => RebuildInstalledView();
 
     /// <summary>Aktive GIANTS-Kategorie (Filter). Null = alle.</summary>
     [ObservableProperty]
@@ -203,11 +213,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
             IsBusy = true;
             StatusText = "Lade installierte Mods …";
             var list = await Task.Run(() => _install.ListInstalled());
-            InstalledMods.Clear();
-            foreach (var m in list) InstalledMods.Add(new InstalledModItemViewModel(m));
-            StatusText = $"{InstalledMods.Count} Mods installiert.";
-            Log.Info("Installierte Mods aktualisiert: {n}", InstalledMods.Count);
-            _ = BackfillCoversAsync(InstalledMods, isInstalled: true);
+            _allInstalled.Clear();
+            foreach (var m in list) _allInstalled.Add(new InstalledModItemViewModel(m));
+            RebuildInstalledView();
+            StatusText = $"{_allInstalled.Count} Mods installiert.";
+            Log.Info("Installierte Mods aktualisiert: {n}", _allInstalled.Count);
+            _ = BackfillCoversAsync(_allInstalled, isInstalled: true);
         }
         catch (Exception ex)
         {
@@ -216,6 +227,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         finally { IsBusy = false; }
     }
+
+    /// <summary>Baut die gefilterte Installiert-Ansicht neu (bei Refresh oder Suchtext-Wechsel).</summary>
+    private void RebuildInstalledView()
+    {
+        var filter = InstalledSearchText?.Trim();
+        InstalledMods.Clear();
+        foreach (var m in _allInstalled)
+        {
+            if (string.IsNullOrEmpty(filter) || MatchesInstalledFilter(m, filter))
+                InstalledMods.Add(m);
+        }
+    }
+
+    private static bool MatchesInstalledFilter(InstalledModItemViewModel item, string filter) =>
+        item.DisplayTitle.Contains(filter, StringComparison.OrdinalIgnoreCase)
+        || (item.Author?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false)
+        || item.Model.FileName.Contains(filter, StringComparison.OrdinalIgnoreCase);
 
     [RelayCommand(CanExecute = nameof(CanInstallFromZip))]
     public async Task InstallFromZipAsync(string? zipPath)
@@ -490,7 +518,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// Bindings die neue Datei sehen. Läuft im Hintergrund — blockiert nicht.
     /// </summary>
     private async Task BackfillCoversAsync(
-        ObservableCollection<InstalledModItemViewModel> collection, bool isInstalled)
+        IEnumerable<InstalledModItemViewModel> collection, bool isInstalled)
     {
         try
         {

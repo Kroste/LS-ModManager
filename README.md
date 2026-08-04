@@ -75,10 +75,10 @@ chmod +x LSModManager-*-x86_64.AppImage
    auf allen Steam-Libraries). Falls die Erkennung fehlschlägt, in ⚙
    *Einstellungen* einen manuellen Pfad setzen. Der Katalog (~4800 Mods) wird
    im Hintergrund geladen — Statusbar zeigt den Fortschritt.
-2. **Installierte Mods verwalten (Tab „📦 Installiert"):** Karten mit Icon,
-   Titel, Autor, Version, Status. Pro Karte rechts: „⏻ (De-)Aktivieren", „🗑
-   Deinstallieren", und bei verfügbarem Update zusätzlich „⬇ Update
-   installieren".
+2. **Installierte Mods verwalten (Tab „📦 Installiert"):** Live-Suche oben
+   (Titel/Autor/Dateiname). Karten mit Icon, Titel, Autor, Version, Status.
+   Pro Karte rechts: „⏻ (De-)Aktivieren", „🗑 Deinstallieren", und bei
+   verfügbarem Update zusätzlich „⬇ Update installieren".
 3. **Neue Mods entdecken (Tab „🌐 ModHub-Katalog"):** Kategorie-Dropdown +
    Live-Suche links. Pro Karte „📥 Herunterladen" (lädt direkt in den
    Downloads-Ordner) und „👁 Details" (Detailfenster mit Screenshots und
