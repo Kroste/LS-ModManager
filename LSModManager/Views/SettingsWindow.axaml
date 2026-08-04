@@ -1,0 +1,85 @@
+<views:ChromeWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:LSModManager.Views"
+        xmlns:controls="using:LSModManager.Controls"
+        xmlns:vm="using:LSModManager.ViewModels"
+        x:Class="LSModManager.Views.SettingsWindow"
+        x:DataType="vm:SettingsWindowViewModel"
+        Width="620" Height="440"
+        MinWidth="500" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        Title="Einstellungen"
+        Background="{DynamicResource KrosteBackgroundBrush}">
+
+    <DockPanel>
+        <controls:TitleBar DockPanel.Dock="Top" Title="Einstellungen" />
+
+        <Border DockPanel.Dock="Top" Padding="20,14,20,10">
+            <StackPanel Spacing="2">
+                <TextBlock Classes="h1" Text="Einstellungen" />
+                <TextBlock Classes="secondary"
+                           Text="Mod-Pfad und Katalog-Sprache anpassen." />
+            </StackPanel>
+        </Border>
+
+        <!-- Buttons unten -->
+        <Border DockPanel.Dock="Bottom" Padding="20,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Classes="ghost" Content="Abbrechen" Click="OnCancelClick" />
+                <Button Classes="accent" Content="Speichern" Click="OnSaveClick" />
+            </StackPanel>
+        </Border>
+
+        <!-- Inhalt -->
+        <ScrollViewer Padding="20,4,20,0">
+            <StackPanel Spacing="14">
+
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="h2" Text="LS25-Mod-Ordner" />
+                        <TextBlock Classes="muted" FontSize="12" TextWrapping="Wrap"
+                                   Text="Standardpfad wird automatisch erkannt (Windows: Dokumente/My Games/FarmingSimulator2025/mods, Linux: Steam-Proton-Präfix). Manueller Pfad überschreibt die Auto-Erkennung." />
+
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Erkannt" Classes="section-label" />
+                            <TextBlock Text="{Binding DetectedPath}" Classes="secondary" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Manueller Pfad (optional)" Classes="section-label" />
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                                <TextBox Text="{Binding ModPathOverride}"
+                                         PlaceholderText="Leer lassen für Auto-Erkennung" />
+                                <Button Grid.Column="1" Content="Durchsuchen…" Click="OnBrowseClick" />
+                                <Button Grid.Column="2" Content="Neu erkennen"
+                                        Command="{Binding DetectCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="h2" Text="ModHub-Katalog" />
+                        <TextBlock Classes="muted" FontSize="12"
+                                   Text="Sprache, in der die Kategorien und Titel von farming-simulator.com geladen werden." />
+
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Sprache" Classes="section-label" />
+                            <ComboBox SelectedItem="{Binding CatalogLanguage}" Width="200"
+                                      HorizontalAlignment="Left">
+                                <ComboBoxItem>de</ComboBoxItem>
+                                <ComboBoxItem>en</ComboBoxItem>
+                                <ComboBoxItem>fr</ComboBoxItem>
+                                <ComboBoxItem>es</ComboBoxItem>
+                                <ComboBoxItem>it</ComboBoxItem>
+                                <ComboBoxItem>pl</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</views:ChromeWindow>

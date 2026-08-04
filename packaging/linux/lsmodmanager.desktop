@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=LS-ModManager
+Comment=Mod-Manager für Landwirtschaftssimulator 25
+Exec=LSModManager
+Icon=lsmodmanager
+Type=Application
+Categories=Game;Utility;
+Terminal=false

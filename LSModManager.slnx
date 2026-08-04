@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LSModManager/LSModManager.csproj" />
+  <Project Path="LSModManager.Tests/LSModManager.Tests.csproj" />
+</Solution>

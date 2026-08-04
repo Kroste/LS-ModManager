@@ -1,0 +1,37 @@
+<views:ChromeWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:LSModManager.Views"
+        xmlns:controls="using:LSModManager.Controls"
+        x:Class="LSModManager.Views.AboutWindow"
+        Width="460" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Über LS-ModManager"
+        Background="{DynamicResource KrosteBackgroundBrush}">
+    <DockPanel>
+        <controls:TitleBar DockPanel.Dock="Top" Title="Über LS-ModManager" />
+        <StackPanel Margin="24" Spacing="16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="LS-ModManager" Classes="h1" FontSize="22" />
+                <TextBlock Text="Mod-Manager für Landwirtschaftssimulator 25 (Windows / Linux)."
+                           Classes="secondary" TextWrapping="Wrap" />
+                <TextBlock x:Name="VersionText" Classes="muted" FontSize="12" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <Rectangle Classes="divider-h" />
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button x:Name="UpdateButton" Classes="accent" Content="Auf Updates prüfen" />
+                <TextBlock x:Name="UpdateResult" VerticalAlignment="Center" Classes="secondary" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button x:Name="GithubButton" Content="GitHub" />
+                <Button x:Name="BmcButton" Content="☕ Buy me a coffee" />
+            </StackPanel>
+
+            <TextBlock Text="MIT-Lizenz · © 2026 Lars Krügel (Kroste)"
+                       Foreground="#6B7280" FontSize="11" />
+        </StackPanel>
+    </DockPanel>
+</views:ChromeWindow>

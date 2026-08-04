@@ -1,0 +1,14 @@
+bin/
+obj/
+publish/
+*.user
+.vs/
+.idea/
+# Lokaler NuGet-Offline-Feed (Arbeitslaptop) — nie einchecken
+NuGet-Local/
+# Nutzer-Config im AppData-Pfad (nicht ins Repo)
+appsettings.local.json
+# AppImage-Build-Artefakte
+AppDir/
+appimagetool
+*.AppImage

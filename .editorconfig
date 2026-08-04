@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{cs,csproj,props,targets,slnx,axaml,xaml}]
+indent_size = 4
+
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+# C# — file-scoped namespaces, expliziter Accessibility, moderne Conventions
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = when_multiline:suggestion
+dotnet_diagnostic.IDE0055.severity = suggestion

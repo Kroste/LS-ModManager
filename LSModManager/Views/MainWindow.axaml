@@ -1,0 +1,216 @@
+<views:ChromeWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:LSModManager.Views"
+        xmlns:controls="using:LSModManager.Controls"
+        xmlns:vm="using:LSModManager.ViewModels"
+        mc:Ignorable="d"
+        d:DesignWidth="1100" d:DesignHeight="720"
+        x:Class="LSModManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1100" Height="720"
+        MinWidth="820" MinHeight="520"
+        Title="LS-ModManager"
+        Background="{DynamicResource KrosteBackgroundBrush}">
+
+    <DockPanel>
+        <controls:TitleBar DockPanel.Dock="Top" Title="LS-ModManager" />
+
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="18,14,18,10">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="h1" Text="LS-ModManager" />
+                        <TextBlock Classes="muted" VerticalAlignment="Bottom"
+                                   Text="{Binding CurrentVersionText}" Margin="0,0,0,4" />
+                    </StackPanel>
+                    <TextBlock Classes="secondary"
+                               Text="Mods für Landwirtschaftssimulator 25 installieren, verwalten, entdecken." />
+                </StackPanel>
+                <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                           Classes="muted" FontSize="11"
+                           Text="{Binding ModPath, StringFormat='Mod-Ordner: {0}'}" />
+            </Grid>
+        </Border>
+
+        <!-- Toolbar-Sektionen -->
+        <Border DockPanel.Dock="Top" Padding="18,4,18,10">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+
+                <StackPanel>
+                    <TextBlock Classes="section-label" Text="INSTALLATION" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Classes="accent" Content="📦 ZIP installieren…"
+                                Click="OnInstallZipClick" />
+                        <Button Content="↺ Aktualisieren"
+                                Command="{Binding RefreshInstalledCommand}" />
+                        <Button Content="⏻ (De-)Aktivieren"
+                                Command="{Binding ToggleEnabledCommand}" />
+                        <Button Classes="danger" Content="🗑 Deinstallieren"
+                                Command="{Binding UninstallCommand}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Rectangle Classes="divider-v" />
+
+                <StackPanel>
+                    <TextBlock Classes="section-label" Text="MODHUB" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="🌐 Katalog laden"
+                                Command="{Binding RefreshCatalogCommand}" />
+                        <Button Content="Im Browser öffnen"
+                                Command="{Binding OpenModHubDetailCommand}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Rectangle Classes="divider-v" />
+
+                <StackPanel>
+                    <TextBlock Classes="section-label" Text="SYSTEM" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="📁 Ordner öffnen"
+                                Command="{Binding OpenModFolderCommand}" />
+                        <Button Content="⚙ Einstellungen" Click="OnSettingsClick" />
+                        <Button Classes="ghost" Content="ⓘ Über" Click="OnAboutClick" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Statusbar unten -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource KrosteTitleBarBrush}"
+                BorderBrush="{DynamicResource KrosteBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="14,6">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
+                <ProgressBar Grid.Column="1" IsIndeterminate="True"
+                             Width="120" Margin="12,0"
+                             IsVisible="{Binding IsBusy}" />
+                <TextBlock Grid.Column="2" Classes="muted" VerticalAlignment="Center"
+                           Text="{Binding InstalledMods.Count, StringFormat='{}{0} Mods'}" />
+            </Grid>
+        </Border>
+
+        <!-- Content-Tabs -->
+        <TabControl Padding="14,4,14,10">
+
+            <!-- ==== Installierte Mods ==== -->
+            <TabItem Header="📦 Installiert">
+                <Border Classes="card-flat" Padding="0">
+                    <ListBox ItemsSource="{Binding InstalledMods}"
+                             SelectedItem="{Binding SelectedInstalled}"
+                             Background="Transparent" BorderThickness="0"
+                             Padding="10">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="vm:InstalledModItemViewModel">
+                                <Border Classes="card" Margin="0,0,0,8" Padding="12">
+                                    <Grid ColumnDefinitions="112,*,Auto">
+                                        <Border Width="112" Height="96"
+                                                Background="{DynamicResource KrosteSurfaceBrush}"
+                                                CornerRadius="6" ClipToBounds="True">
+                                            <Panel>
+                                                <TextBlock Text="🚜" FontSize="42"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource KrosteMutedTextBrush}" />
+                                                <Image Source="{Binding Preview}"
+                                                       Stretch="UniformToFill" />
+                                            </Panel>
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
+                                            <TextBlock Text="{Binding DisplayTitle}" Classes="h2" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding Author}" Classes="muted" />
+                                                <TextBlock Text="·" Classes="muted"
+                                                           IsVisible="{Binding Version, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                <TextBlock Text="{Binding Version}" Classes="muted" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="14">
+                                                <TextBlock Text="{Binding SizeText}" Classes="secondary" FontSize="12" />
+                                                <TextBlock Text="{Binding StatusText}" Classes="secondary" FontSize="12"
+                                                           Foreground="{DynamicResource LsFarmingGreenBrush}" />
+                                                <TextBlock Text="🌐 Multiplayer" Classes="secondary" FontSize="12"
+                                                           IsVisible="{Binding MultiplayerSupported}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding ErrorText}"
+                                                       Foreground="{DynamicResource KrosteDangerBrush}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       IsVisible="{Binding HasError}" />
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Model.FileName}"
+                                                   Classes="muted" FontSize="10"
+                                                   VerticalAlignment="Bottom" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </TabItem>
+
+            <!-- ==== ModHub-Katalog ==== -->
+            <TabItem Header="🌐 ModHub-Katalog">
+                <Border Classes="card-flat" Padding="0">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" Classes="muted" FontSize="11"
+                                   Margin="14,10,14,4" TextWrapping="Wrap"
+                                   Text="Katalog von farming-simulator.com/mods.php. Der Download läuft aus rechtlichen Gründen über den Browser — klicke „Im Browser öffnen“, lade die ZIP herunter, dann „ZIP installieren…“." />
+                        <ListBox Grid.Row="1"
+                                 ItemsSource="{Binding CatalogMods}"
+                                 SelectedItem="{Binding SelectedCatalog}"
+                                 Background="Transparent" BorderThickness="0"
+                                 Padding="10,0,10,10">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="vm:ModHubItemViewModel">
+                                    <Border Classes="card" Margin="0,0,0,8" Padding="12">
+                                        <Grid ColumnDefinitions="140,*,Auto">
+                                            <Border Width="140" Height="90"
+                                                    Background="{DynamicResource KrosteSurfaceBrush}"
+                                                    CornerRadius="6" ClipToBounds="True">
+                                                <Panel>
+                                                    <TextBlock Text="🌐" FontSize="36"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource KrosteMutedTextBrush}" />
+                                                    <Image controls:UrlImageBehavior.Url="{Binding PreviewUrl}"
+                                                           Stretch="UniformToFill" />
+                                                </Panel>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
+                                                <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{Binding Author}" Classes="muted" />
+                                                    <TextBlock Text="·" Classes="muted"
+                                                               IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <TextBlock Text="{Binding Category}" Classes="muted" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                                    <TextBlock Text="{Binding Version}" Classes="secondary" FontSize="12"
+                                                               IsVisible="{Binding Version, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <TextBlock Text="{Binding SizeText}" Classes="secondary" FontSize="12"
+                                                               IsVisible="{Binding SizeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                                <Button Content="🌐 Im Browser"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenModHubDetailCommand}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</views:ChromeWindow>
