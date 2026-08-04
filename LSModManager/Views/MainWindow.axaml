@@ -104,8 +104,23 @@
                         <TextBox DockPanel.Dock="Top" Margin="14,10,14,6"
                                  Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
                                  PlaceholderText="🔍  Installierte Mods filtern (Titel, Autor, Dateiname) …" />
-                        <ListBox ItemsSource="{Binding InstalledMods}"
+                        <!-- Bulk-Toolbar: sichtbar sobald mind. 1 Item markiert ist (Ctrl-Klick / Shift-Klick) -->
+                        <Border DockPanel.Dock="Top" Padding="14,4,14,6"
+                                Background="{DynamicResource KrosteAccentSoftBrush}"
+                                IsVisible="{Binding #InstalledList.SelectedItems.Count}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{Binding #InstalledList.SelectedItems.Count, StringFormat='{}{0} ausgewählt:'}" />
+                                <Button Content="⏻ Alle aktivieren" Click="OnBulkEnableClick" />
+                                <Button Content="⏻ Alle deaktivieren" Click="OnBulkDisableClick" />
+                                <Button Classes="danger" Content="🗑 Alle deinstallieren"
+                                        Click="OnBulkUninstallClick" />
+                            </StackPanel>
+                        </Border>
+                        <ListBox x:Name="InstalledList"
+                             ItemsSource="{Binding InstalledMods}"
                              SelectedItem="{Binding SelectedInstalled}"
+                             SelectionMode="Multiple"
                              Background="Transparent" BorderThickness="0"
                              Padding="10">
                         <ListBox.ItemTemplate>

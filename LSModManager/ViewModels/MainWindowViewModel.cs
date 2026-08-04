@@ -350,6 +350,64 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Bulk-Aktivierung/-Deaktivierung: alle gewählten Mods auf den gewünschten
+    /// State bringen. Aus der UI mit der ListBox-SelectedItems-Liste aufgerufen.
+    /// </summary>
+    public async Task BulkSetEnabledAsync(IReadOnlyList<InstalledModItemViewModel> items, bool enable)
+    {
+        if (items.Count == 0) return;
+        try
+        {
+            IsBusy = true;
+            var changed = 0;
+            foreach (var item in items)
+            {
+                if (item.Model.IsEnabled == enable) continue;
+                try
+                {
+                    await Task.Run(() => _install.SetEnabled(item.Model, enable));
+                    changed++;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Bulk-Toggle übersprungen: {p}", item.Model.FilePath);
+                }
+            }
+            await RefreshInstalledAsync();
+            StatusText = enable
+                ? $"✓ {changed} Mod(s) aktiviert."
+                : $"✓ {changed} Mod(s) deaktiviert.";
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>Bulk-Deinstallation aller übergebenen Mods.</summary>
+    public async Task BulkUninstallAsync(IReadOnlyList<InstalledModItemViewModel> items)
+    {
+        if (items.Count == 0) return;
+        try
+        {
+            IsBusy = true;
+            var removed = 0;
+            foreach (var item in items)
+            {
+                try
+                {
+                    await Task.Run(() => _install.Uninstall(item.Model));
+                    removed++;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Bulk-Uninstall übersprungen: {p}", item.Model.FilePath);
+                }
+            }
+            await RefreshInstalledAsync();
+            StatusText = $"✓ {removed} Mod(s) deinstalliert.";
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>
     /// Startet LS25 via Steam-Protokoll. Funktioniert plattformübergreifend
     /// (Windows + Linux/Proton), sofern Steam installiert ist. AppID kommt aus
     /// den Settings, Fallback auf FS25-ID 2300320.

@@ -138,4 +138,25 @@ public partial class MainWindow : ChromeWindow
         var window = new AboutWindow(updates);
         _ = window.ShowDialog(this);
     }
+
+    private async void OnBulkEnableClick(object? sender, RoutedEventArgs e) =>
+        await RunBulk(items => (DataContext as MainWindowViewModel)!.BulkSetEnabledAsync(items, true));
+
+    private async void OnBulkDisableClick(object? sender, RoutedEventArgs e) =>
+        await RunBulk(items => (DataContext as MainWindowViewModel)!.BulkSetEnabledAsync(items, false));
+
+    private async void OnBulkUninstallClick(object? sender, RoutedEventArgs e) =>
+        await RunBulk(items => (DataContext as MainWindowViewModel)!.BulkUninstallAsync(items));
+
+    private async Task RunBulk(Func<IReadOnlyList<InstalledModItemViewModel>, Task> action)
+    {
+        if (DataContext is not MainWindowViewModel) return;
+        var list = InstalledList;
+        if (list?.SelectedItems is null) return;
+        var items = list.SelectedItems
+            .OfType<InstalledModItemViewModel>()
+            .ToList();
+        if (items.Count == 0) return;
+        await action(items);
+    }
 }

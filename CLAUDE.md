@@ -60,11 +60,13 @@
   Statusbar mit Live-Progress. Toolbar hat „🚜 LS25 starten" (Steam-URI) und
   „🔄 Updates prüfen". Card-basierter Look, kein Fluent-Grau.
 - Installed-Tab: Live-Suche oben (Titel/Autor/Filename, filtert `_allInstalled`
-  in `InstalledMods`). Card-Buttons „⏻ (De-)Aktivieren" und „🗑 Deinstallieren"
-  pro Mod, plus „⬇ Update installieren" (nur sichtbar bei HasUpdate, Katalog-
-  Match und Version-Diff). Update-Ablauf: Download neu → alte deinstallieren
-  → neue installieren → Enabled-State übernehmen. Doppelklick auf Katalog-
-  Card öffnet Detail-Fenster.
+  in `InstalledMods`). Multi-Selection per Ctrl-/Shift-Klick → Bulk-Toolbar
+  erscheint mit „⏻ Alle aktivieren / deaktivieren / 🗑 alle deinstallieren".
+  Card-Buttons „⏻ (De-)Aktivieren" und „🗑 Deinstallieren" pro Mod, plus
+  „⬇ Update installieren" (nur sichtbar bei HasUpdate, Katalog-Match und
+  Version-Diff). Update-Ablauf: Download neu → alte deinstallieren → neue
+  installieren → Enabled-State übernehmen. Doppelklick auf Katalog-Card
+  öffnet Detail-Fenster.
 - **Drag-and-Drop**: Beliebig viele .zip-Dateien auf's Fenster droppen →
   `InstallZipsAsync` installiert sie sequentiell, überspringt Non-ZIPs und
   ungültige Mod-Archive (Log-Warnung, User sieht Count in Statusbar).
@@ -92,8 +94,9 @@
 ## Roadmap
 
 - **Kurzfristig (Quick-Wins):**
-  - **Bulk-Aktionen** — Multi-Selection in Installed-Liste + „Alle
-    aktivieren/deaktivieren/deinstallieren".
+  - _(alle Quick-Wins der letzten Runde erledigt — Update-Install, DnD,
+    Installed-Suche, .broken-Backup, Bulk-Aktionen)_
+
 - **Mittelfristig (Kroste-Standard-Pflichten + solide Ergänzungen):**
   - **Vollständiges Self-Update** nach `references/autoupdate.md`
     (Windows-ZIP-Install-Batch, AppImage-Ersetzung, tar.gz-Rebuild). Aktuell
