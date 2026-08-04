@@ -7,8 +7,8 @@
   (GIANTS-ModHub, Modhoster, Hof Hirschfeld) browsen.
 - **Stack:** C# / .NET 10 / Avalonia 12.1, CommunityToolkit.Mvvm,
   Microsoft.Extensions.DependencyInjection, NLog (mit Secret-Masking),
-  HtmlAgilityPack, Pfim + SkiaSharp (DDS-Dekodierung), xunit.v3 +
-  FluentAssertions 7.x.
+  HtmlAgilityPack, Pfim + SkiaSharp (DDS-Dekodierung), Microsoft.Extensions.Http
+  + ProtectedData (KI-Baukasten), xunit.v3 + FluentAssertions 7.x.
 - **Struktur:** Flach (kein `src/`), `.slnx`, Central Package Management,
   `Directory.Build.props`, MinVer (Tags `v*`).
 - **Konventionen:** Alle Fenster erben von `ChromeWindow`, Kroste-Card-Look,
@@ -174,9 +174,46 @@
 - ModDetailWindow: parst Detail-HTML von `mod.php?mod_id=…` (Titel, Autor,
   Kategorie, Version, Größe, Release, Rating, Beschreibung, Screenshots) und
   rendert alles in-App. „📥 Herunterladen"-Button delegiert an MainVM.
+  **KI-Features** (sichtbar nur wenn Provider != None): Button „🤖
+  Zusammenfassen" schickt Titel + Beschreibung an die KI (Prompt in
+  `AiPromptBuilder.SummarizeSystemPrompt`), Antwort landet in eigener
+  Gold-Card unterhalb der Beschreibungs-Card. Button „🤖 Ähnliche Mods
+  finden" filtert `_allCatalog` auf gleiche Kategorie (max 30, sonst zu
+  teuer), schickt Titelliste an die KI, mappt die 5 Titel-Antworten zurück
+  auf ModHubEntries → Mini-Cards mit 🌐-Browser-Klick. Bewusst kein neues
+  Detail-Fenster (unnötige Kette). Ohne Katalog-Kandidaten:
+  SimilarNoResults-Meldung.
+- **KI-Baukasten** (`Services/Ai/`): Multi-Provider-Fundament nach
+  Kroste-Skill-Standard (`kroste-avalonia/assets/Ai/`) mit einer wichtigen
+  Abweichung — `IAiProvider.CompleteAsync(system, user) → string` statt der
+  Skill-eigenen `TranslateBatchAsync` (App-spezifisch: hier reicht
+  Text-in-Text-out).
+  - Provider: `OllamaProvider` (`/api/chat` + `/api/tags` + `/api/pull`-
+    Streaming), `AnthropicProvider` (`/v1/messages` mit `x-api-key` +
+    `anthropic-version`), `OpenAiCompatibleProvider` (deckt OpenAI, Mistral,
+    Groq, LM Studio, OpenRouter etc. ab), `GeminiProvider`
+    (`generateContent?key=`).
+  - `AiSettingsService`: **eigene** `ai-settings.json` neben `settings.json`
+    (getrennt vom `AppSettingsService` — keine Migration, keine
+    Interference mit dem `.broken`-Backup).
+  - `SecretProtection`: DPAPI auf Windows, AES mit MachineName+UserName-
+    Binding auf Linux/macOS. Salt/Key-Ableitung projekt-spezifisch
+    (`lsmodmanager-secret-v1`) — verhindert dass andere Kroste-Apps die
+    Keys entschlüsseln.
+  - `AiProviderFactory`: nimmt `IHttpClientFactory` (Kanal `ai` für
+    Completions, `ai-pull` für Downloads), baut den passenden Provider aus
+    aktueller `AiSettings`. Ollama-Timeout 10 min, Cloud-Provider 2 min.
+  - `OllamaPullViewModel` + `OllamaPullWindow`: Streaming-Fortschritt vom
+    Ollama-Pull mit Cancel; auf Settings-Fenster als modaler Dialog.
+  - `AiPromptBuilder` (LS-spezifisch, NICHT im Baukasten): die zwei
+    System-Prompts + User-Prompt-Builder + `ParseSimilarModTitles`-Helper
+    für die Rück-Mappung der KI-Antwort.
 - SettingsWindow: Mod-Pfad (Auto-Detect + manueller Override mit Folder-Picker)
   + Katalog-Sprache (ComboBox) + **App-Sprache** (ComboBox mit Länderflaggen,
-  Live-Umschaltung).
+  Live-Umschaltung) + **KI-Integration**-Card (Provider-ComboBox, dynamisch
+  ein-/ausgeblendete Endpoint/Model/API-Key-Felder je nach Wahl, „Verbindung
+  testen"-Button, bei Ollama zusätzlich Empfehlungs-Dropdown mit Direkt-
+  Download).
 - AboutWindow: Version, GitHub-Link, BMC-Link, **„📁 Log-Ordner"-Button**
   (öffnet `AppContext.BaseDirectory/logs` im System-Dateimanager, erspart
   bei Support-Anfragen die Sucherei), „Auf Updates prüfen"-Button.
@@ -237,8 +274,8 @@
   - _(Backup/Restore + L10N-Framework erledigt)_
 
 - **Groß (mehrere Runden):**
-  - **KI-Features** nach Allpaca-Muster (Multi-Provider, Ollama-Default):
-    Beschreibungs-Zusammenfassung, Empfehlungssystem („Ähnliche Mods wie X").
+  - _(KI-Features komplett — Multi-Provider, Beschreibungs-Zusammenfassung,
+    „Ähnliche Mods" erledigt in v0.4.0)_
 
 - **Bekannt-aber-vertagt:**
   - `searchMod`-Parameter der Website — funktioniert nachgewiesen, wird aktuell

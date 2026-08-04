@@ -70,6 +70,13 @@ Windows und Linux (C# / .NET 10 / Avalonia 12).
   Einstellungen-Fenster mit Länderflaggen, Live-Umschaltung im Betrieb ohne
   Neustart. Community-Beiträge für weitere Sprachen willkommen (siehe
   `LSModManager/Localization/`).
+- **🤖 Optionale KI-Features:** Beschreibungs-Zusammenfassung und „Ähnliche
+  Mods"-Empfehlungen im Detail-Fenster. Multi-Provider: **Ollama** (lokal,
+  datenschutzfreundlicher Default — mit eingebautem Modell-Download-Dialog),
+  **Anthropic Claude**, **OpenAI ChatGPT**, **Google Gemini**, **Mistral**
+  oder ein beliebiger OpenAI-kompatibler Endpoint (LM Studio, Groq,
+  OpenRouter …). API-Keys werden verschlüsselt gespeichert (Windows DPAPI /
+  Linux AES mit Maschinen-Binding), nie im Klartext.
 - **🐧 Linux-Support:** Erkennt automatisch den LS25-Mod-Ordner im
   Steam-Proton-Präfix, egal auf welcher Platte Steam-Library liegt
   (`libraryfolders.vdf` wird geparst). Manueller Override in den Einstellungen.
