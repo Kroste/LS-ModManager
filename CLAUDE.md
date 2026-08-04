@@ -63,6 +63,11 @@
   Match und Version-Diff). Update-Ablauf: Download neu → alte deinstallieren
   → neue installieren → Enabled-State übernehmen. Doppelklick auf Katalog-
   Card öffnet Detail-Fenster.
+- **Drag-and-Drop**: Beliebig viele .zip-Dateien auf's Fenster droppen →
+  `InstallZipsAsync` installiert sie sequentiell, überspringt Non-ZIPs und
+  ungültige Mod-Archive (Log-Warnung, User sieht Count in Statusbar).
+  Avalonia-12-`DataTransfer`-API (`e.DataTransfer.Contains(DataFormat.File)`,
+  `TryGetFiles()`).
 - Katalog-Tab: Live-Suche (Titel/Autor/Kategorie), Auto-Full-Load im Hintergrund
   (alle Seiten sequenziell mit 300 ms Delay, GIANTS hat keinen search-Parameter,
   daher clientseitig sammeln). Persistenter JSON-Cache unter
@@ -85,8 +90,6 @@
 ## Roadmap
 
 - **Kurzfristig (Quick-Wins):**
-  - **Drag-and-Drop von ZIPs** aufs Fenster (Installed- und Downloads-Tab),
-    Avalonia-12-DataTransfer-API.
   - **Bulk-Aktionen** — Multi-Selection in Installed-Liste + „Alle
     aktivieren/deaktivieren/deinstallieren".
 - **Mittelfristig (Kroste-Standard-Pflichten + solide Ergänzungen):**

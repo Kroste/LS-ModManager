@@ -86,6 +86,8 @@ chmod +x LSModManager-*-x86_64.AppImage
 4. **Heruntergeladen (Tab „⬇ Downloads"):** Liste aller heruntergeladenen
    ZIPs. Pro Karte „📥 Installieren" (kopiert in Mod-Ordner) und „🗑 Löschen".
 5. **Manuelle ZIP-Installation:** Toolbar → „📦 ZIP installieren…" → Dateiwahl.
+   Alternativ: **eine oder mehrere ZIPs direkt auf's App-Fenster ziehen**
+   — sie werden sequentiell installiert.
 6. **Updates prüfen:** Toolbar → „🔄 Updates prüfen" — die App vergleicht alle
    installierten Versionen mit dem Katalog, markiert veraltete Mods mit einem
    Update-Badge und Update-Button.

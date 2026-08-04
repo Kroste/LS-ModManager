@@ -267,6 +267,48 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanInstallFromZip() => !IsBusy && !string.IsNullOrWhiteSpace(ModPath);
 
+    /// <summary>
+    /// Installiert mehrere ZIPs am Stück (typisch: Drag-and-Drop von mehreren
+    /// Dateien). Nicht-ZIPs und ungültige Mod-Archive werden übersprungen und
+    /// gezählt, damit der Nutzer sieht was passiert ist.
+    /// </summary>
+    public async Task InstallZipsAsync(IReadOnlyList<string> zipPaths)
+    {
+        if (zipPaths.Count == 0 || string.IsNullOrWhiteSpace(ModPath)) return;
+        var installed = 0;
+        var skipped = 0;
+        try
+        {
+            IsBusy = true;
+            for (var i = 0; i < zipPaths.Count; i++)
+            {
+                var path = zipPaths[i];
+                var name = Path.GetFileName(path);
+                if (!path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    skipped++;
+                    continue;
+                }
+                StatusText = $"Installiere ({i + 1}/{zipPaths.Count}): {name} …";
+                try
+                {
+                    await Task.Run(() => _install.Install(path, overwrite: true));
+                    installed++;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(ex, "Drop-Install übersprungen: {p}", path);
+                    skipped++;
+                }
+            }
+            await RefreshInstalledAsync();
+            StatusText = skipped == 0
+                ? $"✓ {installed} Mod(s) installiert."
+                : $"✓ {installed} installiert, {skipped} übersprungen (siehe Log).";
+        }
+        finally { IsBusy = false; }
+    }
+
     [RelayCommand]
     public async Task UninstallAsync(InstalledModItemViewModel? item)
     {
