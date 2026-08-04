@@ -66,6 +66,14 @@ public partial class MainWindow : ChromeWindow
         vm.ShowDetailsCommand.Execute(vm.SelectedCatalog);
     }
 
+    private void OnInstalledDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        // Nur wenn ein Katalog-Match existiert — sonst bleibt es still (der
+        // Nutzer merkt: „aha, für den Mod ist kein Detail verfügbar").
+        vm.TryShowInstalledDetails(vm.SelectedInstalled);
+    }
+
     private void OnDetailRequested(ModHubItemViewModel item)
     {
         try
@@ -200,8 +208,19 @@ public partial class MainWindow : ChromeWindow
     private async void OnBulkDisableClick(object? sender, RoutedEventArgs e) =>
         await RunBulk(items => (DataContext as MainWindowViewModel)!.BulkSetEnabledAsync(items, false));
 
-    private async void OnBulkUninstallClick(object? sender, RoutedEventArgs e) =>
-        await RunBulk(items => (DataContext as MainWindowViewModel)!.BulkUninstallAsync(items));
+    private async void OnBulkUninstallClick(object? sender, RoutedEventArgs e)
+    {
+        // Zerstörerische Bulk-Aktion — Bestätigung einfordern, sonst ist ein
+        // Fehlklick sofort ein Uninstall-Marathon ohne Rückweg.
+        var items = InstalledList?.SelectedItems?.OfType<InstalledModItemViewModel>().ToList();
+        if (items is null || items.Count == 0) return;
+        var confirmed = await ConfirmDialog.ShowAsync(this,
+            L.T("Confirm_BulkUninstall_Title"),
+            L.F("Confirm_BulkUninstall_Message", items.Count));
+        if (!confirmed) return;
+        if (DataContext is MainWindowViewModel vm)
+            await vm.BulkUninstallAsync(items);
+    }
 
     private async Task RunBulk(Func<IReadOnlyList<InstalledModItemViewModel>, Task> action)
     {

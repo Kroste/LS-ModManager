@@ -14,7 +14,12 @@
   <!-- ============ Common ============ -->
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_Confirm" xml:space="preserve"><value>Confirm</value></data>
   <data name="Common_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
+
+  <!-- ============ Confirmation dialogs ============ -->
+  <data name="Confirm_BulkUninstall_Title" xml:space="preserve"><value>Uninstall mods</value></data>
+  <data name="Confirm_BulkUninstall_Message" xml:space="preserve"><value>Really uninstall {0} mods? This deletes the ZIP files from your mod folder.</value></data>
 
   <!-- ============ Statusbar messages (dynamic, set via L.T/L.F from VMs) ============
        Placeholder-Keys ({0}, {1}) are consumed via L.F with CurrentCulture format.

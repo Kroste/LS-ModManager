@@ -89,9 +89,16 @@
                 BorderThickness="0,1,0,0" Padding="14,6">
             <Grid ColumnDefinitions="*,Auto,Auto">
                 <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
+                <!-- Zwei ProgressBars an Grid.Column=1 übereinander, je nach Modus sichtbar:
+                     - Indeterminate-Animation wenn IsBusy aber kein Zahlwert bekannt
+                     - Determinate mit echtem 0..1-Wert sobald ProgressValue gesetzt ist -->
                 <ProgressBar Grid.Column="1" IsIndeterminate="True"
                              Width="120" Margin="12,0"
-                             IsVisible="{Binding IsBusy}" />
+                             IsVisible="{Binding IsBusyIndeterminate}" />
+                <ProgressBar Grid.Column="1" Minimum="0" Maximum="1"
+                             Value="{Binding ProgressValue, FallbackValue=0}"
+                             Width="120" Margin="12,0"
+                             IsVisible="{Binding HasProgressValue}" />
                 <!-- Zähler-Suffix: Zahl aus Binding + statischer Suffix aus {loc:Tr} —
                      so bleibt Live-Sprachwechsel funktional ohne VM-Notify-Handler. -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
@@ -133,6 +140,7 @@
                              ItemsSource="{Binding InstalledMods}"
                              SelectedItem="{Binding SelectedInstalled}"
                              SelectionMode="Multiple"
+                             DoubleTapped="OnInstalledDoubleTapped"
                              Background="Transparent" BorderThickness="0"
                              Padding="10">
                         <ListBox.ItemTemplate>

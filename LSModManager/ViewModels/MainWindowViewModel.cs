@@ -203,6 +203,35 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = "";
 
+    /// <summary>
+    /// Fortschrittswert (0..1) für die Statusbar. <c>null</c> = indeterminate
+    /// (unbekannter Fortschritt, Animation). Wird aus den Progress-Reportern
+    /// von Download/Backup/Restore/Katalog-Load gefeuert und muss NACH jeder
+    /// Aktion zurückgesetzt werden (<c>ProgressValue = null</c>) — sonst hängt
+    /// der Balken auf 100 %.
+    /// </summary>
+    [ObservableProperty]
+    private double? _progressValue;
+
+    /// <summary>True wenn <see cref="ProgressValue"/> auf einem konkreten Wert
+    /// steht — an XAML gebunden um zwischen determinate und indeterminate
+    /// umzuschalten.</summary>
+    public bool HasProgressValue => ProgressValue.HasValue;
+
+    /// <summary>True wenn eine Operation läuft (IsBusy), aber kein konkreter
+    /// Fortschrittswert bekannt ist — dann zeigt die Statusbar die
+    /// Indeterminate-Animation. Beispiel: „Lade installierte Mods …" (kurze
+    /// Aktion ohne Progress-Reporter).</summary>
+    public bool IsBusyIndeterminate => IsBusy && !ProgressValue.HasValue;
+
+    partial void OnProgressValueChanged(double? value)
+    {
+        OnPropertyChanged(nameof(HasProgressValue));
+        OnPropertyChanged(nameof(IsBusyIndeterminate));
+    }
+
+    partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(IsBusyIndeterminate));
+
     /// <summary>Filter-Text für den Katalog. Wird live angewandt (Titel/Autor/Kategorie).</summary>
     [ObservableProperty]
     private string _catalogSearchText = "";
@@ -326,7 +355,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             IsBusy = true;
             var progress = new Progress<BackupProgress>(p =>
-                StatusText = L.F("Status_BackupCreating", p.Current, p.Total, p.CurrentFileName));
+            {
+                StatusText = L.F("Status_BackupCreating", p.Current, p.Total, p.CurrentFileName);
+                ProgressValue = p.Fraction;
+            });
             var result = await _backup.CreateBackupAsync(targetZipPath, progress);
             var mb = result.FileSizeBytes / (1024d * 1024d);
             StatusText = L.F("Status_BackupCreated", result.ModCount, mb, result.FilePath);
@@ -341,7 +373,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Log.Error(ex, "Backup fehlgeschlagen: {p}", targetZipPath);
             StatusText = L.F("Status_BackupFailed", ex.Message);
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; ProgressValue = null; }
     }
 
     /// <summary>
@@ -357,7 +389,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
             IsBusy = true;
             StatusText = L.T("Status_RestoreReading");
             var progress = new Progress<BackupProgress>(p =>
-                StatusText = L.F("Status_Restoring", p.Current, p.Total, p.CurrentFileName));
+            {
+                StatusText = L.F("Status_Restoring", p.Current, p.Total, p.CurrentFileName);
+                ProgressValue = p.Fraction;
+            });
             var result = await _backup.RestoreBackupAsync(backupZipPath, progress);
             await RefreshInstalledAsync();
             StatusText = L.F("Status_RestoreDone", result.RestoredCount, result.SkippedCount);
@@ -367,7 +402,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Log.Error(ex, "Restore fehlgeschlagen: {p}", backupZipPath);
             StatusText = L.F("Status_RestoreFailed", ex.Message);
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; ProgressValue = null; }
     }
 
     /// <summary>
@@ -614,8 +649,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var oldVersion = item.Version;
 
             var progress = new Progress<ModDownloadProgress>(p =>
+            {
                 StatusText = L.F("Status_UpdateDownloading", oldTitle,
-                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : "")));
+                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : ""));
+                ProgressValue = p.Fraction;
+            });
 
             // 1. Neue Version in den Downloads-Ordner laden (Cover mit).
             var result = await _hub.DownloadModAsync(modId.Value, lang, progress,
@@ -645,7 +683,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Log.Error(ex, "Update-Installation fehlgeschlagen");
             StatusText = L.F("Status_UpdateFailed", ex.Message);
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; ProgressValue = null; }
     }
 
     private bool CanUpdateMod() => !IsBusy && !string.IsNullOrWhiteSpace(ModPath);
@@ -1184,6 +1222,22 @@ public sealed partial class MainWindowViewModel : ObservableObject
             || e.Category.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Öffnet das Detail-Fenster für einen installierten Mod, wenn im Katalog
+    /// ein Match gefunden wird. Ohne Match: null — der Caller entscheidet was
+    /// zu tun ist (typisch: gar nichts, weil der Nutzer den Doppelklick
+    /// verstehen wird). Wird vom Doppelklick-Handler auf der Installiert-Liste
+    /// aufgerufen.
+    /// </summary>
+    public bool TryShowInstalledDetails(InstalledModItemViewModel? mod)
+    {
+        if (mod is null) return false;
+        var entry = LookupCatalogEntry(mod.Model.FileName);
+        if (entry is null) return false;
+        DetailRequested?.Invoke(new ModHubItemViewModel(entry));
+        return true;
+    }
+
     /// <summary>Zeigt den Detail-Dialog für den übergebenen Mod (Signal an MainWindow).</summary>
     [RelayCommand]
     public void ShowDetails(ModHubItemViewModel? item)
@@ -1232,8 +1286,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             IsBusy = true;
             var lang = _settings.Current.CatalogLanguage ?? "de";
             var progress = new Progress<ModDownloadProgress>(p =>
+            {
                 StatusText = L.F("Status_Downloading", target.Title,
-                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : "")));
+                    p.FormatShort() + (p.Fraction is { } f ? $" ({f * 100:F0}%)" : ""));
+                ProgressValue = p.Fraction;
+            });
             var result = await _hub.DownloadModAsync(modId.Value, lang, progress,
                 coverImageUrl: string.IsNullOrWhiteSpace(target.PreviewUrl) ? null : target.PreviewUrl);
             await RefreshDownloadedAsync();
@@ -1244,7 +1301,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             Log.Error(ex, "Download fehlgeschlagen für {title}", target.Title);
             StatusText = L.T("Common_ErrorPrefix") + ex.Message;
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; ProgressValue = null; }
     }
 
     private bool CanDownload() => !IsBusy;

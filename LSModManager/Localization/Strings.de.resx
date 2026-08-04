@@ -8,7 +8,11 @@
 
   <data name="Common_Cancel" xml:space="preserve"><value>Abbrechen</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Speichern</value></data>
+  <data name="Common_Confirm" xml:space="preserve"><value>Bestätigen</value></data>
   <data name="Common_ErrorPrefix" xml:space="preserve"><value>Fehler: </value></data>
+
+  <data name="Confirm_BulkUninstall_Title" xml:space="preserve"><value>Mods deinstallieren</value></data>
+  <data name="Confirm_BulkUninstall_Message" xml:space="preserve"><value>Wirklich {0} Mods deinstallieren? Die ZIP-Dateien werden aus dem Mod-Ordner gelöscht.</value></data>
 
   <data name="Status_Ready" xml:space="preserve"><value>Bereit.</value></data>
   <data name="Status_LoadingInstalled" xml:space="preserve"><value>Lade installierte Mods …</value></data>
