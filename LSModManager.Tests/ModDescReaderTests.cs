@@ -90,6 +90,71 @@ public sealed class ModDescReaderTests : IDisposable
     }
 
     [Fact]
+    public void Read_DekodiertDdsPreview_WennKeineAlternative()
+    {
+        // Mod hat nur icon.dds — kein PNG, kein Store-Bild. Vorher: kein Preview
+        // (Emoji-Fallback). Nach DDS-Decoder-Integration: sollte ein echtes PNG
+        // aus dem DDS rauskommen.
+        var dds = BuildUncompressedBgraDdsFixture(width: 4, height: 4);
+        var zip = CreateModZip("dds-only.zip",
+            modDesc: """
+                <?xml version="1.0" encoding="utf-8"?>
+                <modDesc descVersion="86">
+                    <author>Kroste</author>
+                    <version>1.0.0</version>
+                    <title><en>DDS-only Mod</en></title>
+                    <iconFilename>icon.dds</iconFilename>
+                </modDesc>
+                """,
+            extraFiles: new Dictionary<string, byte[]> { { "icon.dds", dds } });
+
+        var result = new ModDescReader().Read(zip);
+
+        result.Error.Should().BeNull();
+        result.PreviewPngBytes.Should().NotBeNull();
+        // Magic-Bytes: es ist wirklich PNG (nicht durchgereichte DDS-Bytes).
+        result.PreviewPngBytes![0].Should().Be(0x89);
+        result.PreviewPngBytes[1].Should().Be(0x50);
+    }
+
+    [Fact]
+    public void Read_BevorzugtPngUeberDds_WennBeideVorhanden()
+    {
+        // PNG ist immer besser — Store-Bilder sind kuratiert, DDS ist typisch
+        // das kleine In-Game-Icon.
+        var pngBytes = new byte[]
+        {
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG-Magic
+            // Minimales aber gültiges IHDR (1x1 grayscale) — reicht damit IsPngOrJpeg passt.
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x00, 0x00, 0x00, 0x00,
+        };
+        var dds = BuildUncompressedBgraDdsFixture(4, 4);
+        var zip = CreateModZip("both.zip",
+            modDesc: """
+                <?xml version="1.0" encoding="utf-8"?>
+                <modDesc descVersion="86">
+                    <author>K</author><version>1</version>
+                    <title><en>Both</en></title>
+                    <iconFilename>icon.dds</iconFilename>
+                </modDesc>
+                """,
+            extraFiles: new Dictionary<string, byte[]>
+            {
+                { "icon.png", pngBytes },
+                { "icon.dds", dds },
+            });
+
+        var result = new ModDescReader().Read(zip);
+
+        // Größe = pngBytes.Length wenn PNG genommen wurde. Nach DDS-Decoding
+        // wäre das PNG deutlich größer (mindestens IHDR + IDAT + IEND für 4x4).
+        result.PreviewPngBytes.Should().NotBeNull();
+        result.PreviewPngBytes!.Length.Should().Be(pngBytes.Length);
+    }
+
+    [Fact]
     public void Read_MeldetFehler_WennModDescFehlt()
     {
         var zip = Path.Combine(_tempDir, "kein-desc.zip");
@@ -103,6 +168,25 @@ public sealed class ModDescReaderTests : IDisposable
         var result = new ModDescReader().Read(zip);
         result.Metadata.Should().BeNull();
         result.Error.Should().Contain("modDesc.xml");
+    }
+
+    /// <summary>
+    /// Minimales unkomprimiertes BGRA-DDS mit konstanten Pixeln — reicht für
+    /// den DDS-Fallback-Test in <see cref="ModDescReader"/>. Delegiert an den
+    /// DDS-Header-Builder aus <see cref="DdsToPngConverterTests"/> (Layout
+    /// steht dort dokumentiert).
+    /// </summary>
+    private static byte[] BuildUncompressedBgraDdsFixture(int width, int height)
+    {
+        var pixels = new byte[width * height * 4];
+        for (var i = 0; i < pixels.Length; i += 4)
+        {
+            pixels[i + 0] = 0x40; // B
+            pixels[i + 1] = 0x80; // G
+            pixels[i + 2] = 0xC0; // R
+            pixels[i + 3] = 0xFF; // A
+        }
+        return DdsToPngConverterTests.BuildUncompressedBgraDds(width, height, pixels);
     }
 
     private string CreateModZip(string name, string modDesc, Dictionary<string, byte[]>? extraFiles = null)

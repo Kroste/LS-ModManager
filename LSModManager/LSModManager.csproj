@@ -22,6 +22,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="NLog" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Pfim" />
+    <PackageReference Include="SkiaSharp" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">

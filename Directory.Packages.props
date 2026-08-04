@@ -23,6 +23,13 @@
     <!-- HTML-Parser für ModHub-Katalog (MS-PL, ok) -->
     <PackageVersion Include="HtmlAgilityPack" Version="1.11.72" />
 
+    <!-- DDS-Decoder für Mod-Icons (BC1/BC3/RGBA). Pfim = pure C#, MIT.
+         SkiaSharp = PNG-Encoder für die dekodierten Roh-Pixel; nativ enthalten
+         in Avalonia auch schon, wir binden es aber explizit ein statt Avalonia-
+         internes API zu nutzen (das ist nicht garantiert stabil). -->
+    <PackageVersion Include="Pfim" Version="0.11.3" />
+    <PackageVersion Include="SkiaSharp" Version="3.119.4" />
+
     <!-- Tests: xunit.v3 (NICHT das alte "xunit"-Paket); FluentAssertions unter 8 (Lizenz) -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />

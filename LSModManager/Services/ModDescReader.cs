@@ -9,8 +9,10 @@ namespace LSModManager.Services;
 /// <summary>
 /// Liest <c>modDesc.xml</c> aus einer LS/FS-Mod-ZIP und extrahiert die Metadaten
 /// plus optional ein Vorschau-PNG. LS25-Mods verwenden meist <c>icon.dds</c> —
-/// das kann Avalonia nicht nativ zeichnen, deswegen versuchen wir zusätzlich
-/// alternative PNG-Icons (icon.png, store_*.png) für die Vorschau zu finden.
+/// wir suchen zuerst nach PNG-Alternativen (icon.png, store_*.png), und wenn
+/// es keine gibt, dekodieren wir die DDS via <see cref="DdsToPngConverter"/>
+/// zu PNG. So bekommen praktisch alle LS25-Mods eine echte Preview statt
+/// nur den 🚜-Emoji-Fallback.
 /// </summary>
 public sealed class ModDescReader
 {
@@ -83,40 +85,71 @@ public sealed class ModDescReader
 
     /// <summary>
     /// Sucht ein Vorschau-PNG in der ZIP. Reihenfolge:
-    /// 1. iconFilename mit .png (statt .dds), 2. icon.png, 3. store_*.png, 4. beliebiges *.png.
-    /// DDS wird bewusst ausgelassen — Avalonia kann das nicht rendern.
+    /// 1. iconFilename mit .png (statt .dds), 2. icon.png, 3. store_*.png,
+    /// 4. beliebiges *.png, 5. iconFilename als DDS (dekodiert),
+    /// 6. beliebiges *.dds (dekodiert). DDS ist Fallback — echte PNGs sind
+    /// meistens bessere Store-Bilder, DDS ist typisch das in-Game-Icon.
     /// </summary>
     private static byte[]? TryExtractPreview(ZipArchive archive, string? iconFileName)
     {
-        // Nur PNG-Kandidaten. DDS wird bewusst nicht extrahiert (Avalonia rendert
-        // kein DDS, und wenn wir DDS-Bytes als „PreviewPngBytes" durchreichen,
-        // landen die als .bin im Cache und verdecken das echte Cover.
-        var candidates = new List<string>();
+        var pngCandidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(iconFileName))
         {
             var withoutExt = Path.GetFileNameWithoutExtension(iconFileName);
-            candidates.Add(withoutExt + ".png");
+            pngCandidates.Add(withoutExt + ".png");
             if (iconFileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                candidates.Add(iconFileName);
+                pngCandidates.Add(iconFileName);
         }
-        candidates.Add("icon.png");
+        pngCandidates.Add("icon.png");
 
-        foreach (var name in candidates)
+        foreach (var name in pngCandidates)
         {
             var entry = archive.Entries.FirstOrDefault(e =>
                 string.Equals(e.FullName, name, StringComparison.OrdinalIgnoreCase));
             if (entry is not null)
-                return ReadIfImage(entry);
+            {
+                var png = ReadIfImage(entry);
+                if (png is not null) return png;
+            }
         }
 
         var store = archive.Entries.FirstOrDefault(e =>
             e.FullName.StartsWith("store_", StringComparison.OrdinalIgnoreCase) &&
             e.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
-        if (store is not null) return ReadIfImage(store);
+        if (store is not null)
+        {
+            var png = ReadIfImage(store);
+            if (png is not null) return png;
+        }
 
         var anyPng = archive.Entries.FirstOrDefault(e =>
             e.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
-        return anyPng is null ? null : ReadIfImage(anyPng);
+        if (anyPng is not null)
+        {
+            var png = ReadIfImage(anyPng);
+            if (png is not null) return png;
+        }
+
+        // Fallback: DDS dekodieren. Erst der genannte iconFilename, dann beliebige *.dds.
+        // Pfim macht das alles in-Memory; die Konvertierung ist billig (~10 ms für 256px).
+        if (!string.IsNullOrWhiteSpace(iconFileName) &&
+            iconFileName.EndsWith(".dds", StringComparison.OrdinalIgnoreCase))
+        {
+            var namedDds = archive.Entries.FirstOrDefault(e =>
+                string.Equals(e.FullName, iconFileName, StringComparison.OrdinalIgnoreCase));
+            var converted = namedDds is null ? null : DdsToPngConverter.Convert(ReadBytes(namedDds));
+            if (converted is not null) return converted;
+        }
+
+        var anyDds = archive.Entries.FirstOrDefault(e =>
+            e.FullName.EndsWith(".dds", StringComparison.OrdinalIgnoreCase));
+        if (anyDds is not null)
+        {
+            var converted = DdsToPngConverter.Convert(ReadBytes(anyDds));
+            if (converted is not null) return converted;
+        }
+
+        return null;
     }
 
     /// <summary>
