@@ -43,6 +43,19 @@
             </Grid>
         </Border>
 
+        <!-- Erst-Start-Hinweis: sichtbar solange kein Mod-Pfad ermittelt ist.
+             Warnfarbe damit's als „musst du dir mal anschauen" auffällt, aber
+             nicht als Fehler (die App funktioniert weiterhin für Katalog etc.). -->
+        <Border DockPanel.Dock="Top" Padding="14,10" Margin="18,0,18,10"
+                Background="{DynamicResource KrosteWarningSoftBrush}"
+                BorderBrush="{DynamicResource KrosteWarningBrush}"
+                BorderThickness="1" CornerRadius="6"
+                IsVisible="{Binding IsModPathMissing}">
+            <TextBlock Text="{loc:Tr ModPath_FirstStartHint}"
+                       TextWrapping="Wrap" FontSize="12"
+                       Foreground="{DynamicResource KrosteWarningTextBrush}" />
+        </Border>
+
         <!-- Toolbar-Sektionen -->
         <Border DockPanel.Dock="Top" Padding="18,4,18,10">
             <StackPanel Orientation="Horizontal" Spacing="14">
@@ -268,8 +281,9 @@
             <TabItem Header="{loc:Tr Tab_Catalog}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
-                        <!-- Katalog-Toolbar: Kategorie + Suche + Refresh -->
-                        <Grid DockPanel.Dock="Top" ColumnDefinitions="240,*,Auto" Margin="14,10,14,6"
+                        <!-- Katalog-Toolbar: Kategorie + Suche + Sort + Refresh -->
+                        <Grid DockPanel.Dock="Top"
+                              ColumnDefinitions="240,*,Auto,Auto,Auto" Margin="14,10,14,6"
                               ColumnSpacing="8">
                             <ComboBox ItemsSource="{Binding Categories}"
                                       SelectedItem="{Binding SelectedCategory}"
@@ -283,7 +297,18 @@
                             <TextBox Grid.Column="1"
                                      Text="{Binding CatalogSearchText, UpdateSourceTrigger=PropertyChanged}"
                                      PlaceholderText="{loc:Tr Catalog_SearchPlaceholder}" />
-                            <Button Grid.Column="2" Classes="ghost" Content="↺"
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                       Classes="secondary" Text="{loc:Tr Catalog_SortLabel}" />
+                            <ComboBox Grid.Column="3" Width="160"
+                                      ItemsSource="{Binding CatalogSortOptions}"
+                                      SelectedItem="{Binding SelectedCatalogSortOption}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding LabelWrapper.Value}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="4" Classes="ghost" Content="↺"
                                     ToolTip.Tip="{loc:Tr Catalog_RefreshTooltip}"
                                     Command="{Binding RefreshCatalogCommand}" />
                         </Grid>

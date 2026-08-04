@@ -75,6 +75,7 @@
 
   <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod-Ordner gefunden</value></data>
   <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod-Ordner nicht gefunden</value></data>
+  <data name="ModPath_FirstStartHint" xml:space="preserve"><value>⚠ Mod-Ordner nicht gefunden — öffne ⚙ Einstellungen und setze den Pfad manuell. Landwirtschaftssimulator 25 muss installiert und mindestens einmal gestartet worden sein, damit der Mod-Ordner existiert.</value></data>
 
   <data name="ModDetail_Loading" xml:space="preserve"><value>Lade Details …</value></data>
   <data name="ModDetail_LoadFailed" xml:space="preserve"><value>Details konnten nicht geladen werden.</value></data>
@@ -140,6 +141,11 @@
   <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Öffnen</value></data>
   <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
   <data name="Catalog_NewBadge" xml:space="preserve"><value>NEU</value></data>
+  <data name="Catalog_SortLabel" xml:space="preserve"><value>Sortierung:</value></data>
+  <data name="Catalog_Sort_Default" xml:space="preserve"><value>Standard</value></data>
+  <data name="Catalog_Sort_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Catalog_Sort_Author" xml:space="preserve"><value>Autor</value></data>
+  <data name="Catalog_Sort_Category" xml:space="preserve"><value>Kategorie</value></data>
 
   <data name="Downloads_Info" xml:space="preserve"><value>Fertig heruntergeladen, noch nicht installiert. Klick auf Installieren kopiert die ZIP in den LS25-Mod-Ordner.</value></data>
   <data name="Downloads_OpenFolder" xml:space="preserve"><value>📁 Ordner</value></data>
@@ -179,6 +185,7 @@
   <data name="About_InstallerRunning" xml:space="preserve"><value>Installer läuft, App beendet sich …</value></data>
   <data name="About_ErrorPrefix" xml:space="preserve"><value>Fehler: </value></data>
   <data name="About_License" xml:space="preserve"><value>MIT-Lizenz · © 2026 Lars Krügel (Kroste)</value></data>
+  <data name="About_OpenLogFolder" xml:space="preserve"><value>📁 Log-Ordner</value></data>
 
   <data name="ModDetail_OpenInBrowser" xml:space="preserve"><value>🌐 Im Browser</value></data>
   <data name="ModDetail_Download" xml:space="preserve"><value>📥 Herunterladen</value></data>

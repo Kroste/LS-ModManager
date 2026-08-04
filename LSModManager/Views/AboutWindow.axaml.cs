@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -29,6 +31,29 @@ public partial class AboutWindow : ChromeWindow
         InstallUpdateButton.Click += OnInstallUpdate;
         GithubButton.Click += (_, _) => Launch(GithubUrl);
         BmcButton.Click += (_, _) => Launch(BmcUrl);
+        LogFolderButton.Click += (_, _) => OpenLogFolder();
+    }
+
+    /// <summary>
+    /// Öffnet den Ordner mit den NLog-Log-Dateien im System-Dateimanager.
+    /// Pfad ist relativ zur nlog.config (<c>logs/</c> neben der Exe) —
+    /// mit <see cref="AppContext.BaseDirectory"/> aufgelöst. Falls der
+    /// Ordner noch nicht existiert (frisch installierte App vor dem ersten
+    /// Log-Write), wird er angelegt, damit der Dateimanager nicht ins
+    /// Leere zeigt.
+    /// </summary>
+    private void OpenLogFolder()
+    {
+        try
+        {
+            var logDir = Path.Combine(AppContext.BaseDirectory, "logs");
+            Directory.CreateDirectory(logDir);
+            Process.Start(new ProcessStartInfo(logDir) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Log-Ordner konnte nicht geöffnet werden");
+        }
     }
 
     private async void OnCheckUpdate(object? sender, RoutedEventArgs e)

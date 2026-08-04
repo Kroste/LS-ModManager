@@ -25,6 +25,11 @@
         <SolidColorBrush x:Key="KrosteTextBrush" Color="#E4E7EC" />
         <SolidColorBrush x:Key="KrosteDangerBrush" Color="#C42B1C" />
         <SolidColorBrush x:Key="KrosteSuccessBrush" Color="#3AA55B" />
+        <!-- Warning: für Erst-Start-Hinweis, „aufmerksam"-Banner. Weniger
+             alarmierend als Danger, aber sichtbar aus dem Grau/Blau-Look. -->
+        <SolidColorBrush x:Key="KrosteWarningBrush" Color="#E0B14C" />
+        <SolidColorBrush x:Key="KrosteWarningSoftBrush" Color="#2A2216" />
+        <SolidColorBrush x:Key="KrosteWarningTextBrush" Color="#F0D080" />
         <!-- LS-Farming-Grün als Sekundär-Akzent (Traktor-Icon) -->
         <SolidColorBrush x:Key="LsFarmingGreenBrush" Color="#4CAF50" />
     </Application.Resources>

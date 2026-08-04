@@ -35,6 +35,7 @@
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Button x:Name="GithubButton" Content="GitHub" />
                 <Button x:Name="BmcButton" Content="☕ Buy me a coffee" />
+                <Button x:Name="LogFolderButton" Content="{loc:Tr About_OpenLogFolder}" />
             </StackPanel>
 
             <TextBlock Text="{loc:Tr About_License}"

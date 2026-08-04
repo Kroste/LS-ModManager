@@ -64,7 +64,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         ModPath = _paths.GetModPath() ?? "";
         _statusText = L.T("Status_Ready");
-        _selectedSortOption = SortOptions[0]; // Default: nach Name sortieren
+        _selectedSortOption = SortOptions[0]; // Installed: Default nach Name
+        _selectedCatalogSortOption = CatalogSortOptions[0]; // Katalog: Default = Ladereihenfolge
+        _lastCatalogLanguage = _settings.Current.CatalogLanguage ?? "de";
 
         // Sprachwechsel im laufenden Betrieb: ModPathStatusText und CurrentVersionText
         // sind computed-Properties mit L.T-Aufrufen — die müssen bei Sprachwechsel neu
@@ -204,6 +206,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ? L.T("ModPath_NotFound")
         : L.T("ModPath_Found");
 
+    /// <summary>True wenn kein Mod-Pfad ermittelt werden konnte — Trigger für
+    /// den Erst-Start-Hinweis-Banner im Header. Steuert die Sichtbarkeit einer
+    /// prominenten Meldung, damit ein Neu-Nutzer nicht ratlos vor einer leeren
+    /// Installiert-Liste sitzt.</summary>
+    public bool IsModPathMissing => string.IsNullOrWhiteSpace(ModPath);
+
     /// <summary>
     /// Gesamtgröße aller aktivierten Mods (formatiert als MB/GB). Wird in der
     /// Statusbar rechts neben dem Zähler angezeigt — LS25 hat ein weiches Limit
@@ -307,6 +315,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<ModHubCategory> Categories { get; } = new();
 
+    /// <summary>Sortierung der Katalog-Liste. Default = Ladereihenfolge
+    /// (GIANTS liefert typisch „neueste zuerst").</summary>
+    public IReadOnlyList<CatalogSortOption> CatalogSortOptions { get; } = new[]
+    {
+        new CatalogSortOption(CatalogSortKey.Default, LocalizedString.Get("Catalog_Sort_Default")),
+        new CatalogSortOption(CatalogSortKey.Name, LocalizedString.Get("Catalog_Sort_Name")),
+        new CatalogSortOption(CatalogSortKey.Author, LocalizedString.Get("Catalog_Sort_Author")),
+        new CatalogSortOption(CatalogSortKey.Category, LocalizedString.Get("Catalog_Sort_Category")),
+    };
+
+    [ObservableProperty]
+    private CatalogSortOption? _selectedCatalogSortOption;
+
+    partial void OnSelectedCatalogSortOptionChanged(CatalogSortOption? value) => RebuildCatalogView();
+
     partial void OnSelectedCategoryChanged(ModHubCategory? value)
     {
         // „Alle Kategorien"-Sentinel behandelt der Filter als null (kein Filter).
@@ -324,7 +347,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             ? null
             : SelectedCategory.Filter;
 
-    partial void OnModPathChanged(string value) => OnPropertyChanged(nameof(ModPathStatusText));
+    partial void OnModPathChanged(string value)
+    {
+        OnPropertyChanged(nameof(ModPathStatusText));
+        OnPropertyChanged(nameof(IsModPathMissing));
+    }
 
     partial void OnCatalogSearchTextChanged(string value) => RebuildCatalogView();
 
@@ -1275,26 +1302,44 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Vollständiger Neuaufbau der Katalog-Ansicht (nur bei Suchtext-Änderung
-    /// oder Refresh). Bei laufendem Full-Load nutzen wir <see cref="AppendToCatalogView"/>,
-    /// sonst flimmert die ListBox bei jedem Seiten-Nachlader.
+    /// Vollständiger Neuaufbau der Katalog-Ansicht (nur bei Suchtext-Änderung,
+    /// Sortier-Wechsel oder Refresh). Bei laufendem Full-Load nutzen wir
+    /// <see cref="AppendToCatalogView"/>, sonst flimmert die ListBox bei jedem
+    /// Seiten-Nachlader.
     /// </summary>
     private void RebuildCatalogView()
     {
         List<ModHubEntry> snapshot;
         lock (_catalogLock) { snapshot = _allCatalog.ToList(); }
 
+        var filtered = snapshot.Where(MatchesFilter);
+        var sorted = SortCatalog(filtered, SelectedCatalogSortOption?.Key ?? CatalogSortKey.Default);
+
         CatalogMods.Clear();
-        foreach (var e in snapshot.Where(MatchesFilter))
+        foreach (var e in sorted)
             CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
     }
 
-    /// <summary>Nur die neuen Einträge anhängen — für den Background-Full-Load.</summary>
+    /// <summary>Nur die neuen Einträge anhängen — für den Background-Full-Load.
+    /// Sortierung wird hier BEWUSST nicht angewandt: das würde bei jedem
+    /// Seiten-Nachlader die ListBox neu ordnen und Positionen umherspringen
+    /// lassen. Der User kann nach Full-Load per Dropdown erneut sortieren.</summary>
     private void AppendToCatalogView(IEnumerable<ModHubEntry> entries)
     {
         foreach (var e in entries.Where(MatchesFilter))
             CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
     }
+
+    private static IEnumerable<ModHubEntry> SortCatalog(
+        IEnumerable<ModHubEntry> source, CatalogSortKey key) => key switch
+    {
+        CatalogSortKey.Name     => source.OrderBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        CatalogSortKey.Author   => source.OrderBy(e => e.Author, StringComparer.OrdinalIgnoreCase)
+                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        CatalogSortKey.Category => source.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
+                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        _                       => source, // Default: Ladereihenfolge unverändert
+    };
 
     /// <summary>True wenn der Eintrag beim vorherigen App-Start noch nicht im
     /// Katalog war (Diff gegen <see cref="_previousSeenUrls"/>). Beim Erst-Start
@@ -1418,12 +1463,32 @@ public sealed partial class MainWindowViewModel : ObservableObject
         return m.Success && int.TryParse(m.Groups[1].Value, out var id) ? id : null;
     }
 
-    /// <summary>Nach Änderungen von ModPath (z.B. aus Settings): Anzeige aktualisieren.</summary>
+    /// <summary>Nach Änderungen aus dem Settings-Fenster: Mod-Pfad + ggf.
+    /// Katalog nachziehen. Der Katalog wird nur bei tatsächlichem Sprach-
+    /// Wechsel neu geladen (Full-Load dauert ~2 min — kein blindes Refresh
+    /// nach jedem Settings-Save).</summary>
     public void ReloadPath()
     {
         ModPath = _paths.GetModPath() ?? "";
         _ = RefreshInstalledAsync();
+
+        // Katalog-Sprache: hat sie sich geändert? Dann Kategorien und
+        // Kataloginhalt neu vom Server. Der Seen-Snapshot ist per Sprache
+        // separat (catalog-<lang>-seen.txt) — für die neue Sprache neu laden.
+        var currentLang = _settings.Current.CatalogLanguage ?? "de";
+        if (!string.Equals(currentLang, _lastCatalogLanguage, StringComparison.OrdinalIgnoreCase))
+        {
+            _lastCatalogLanguage = currentLang;
+            _previousSeenUrls = CatalogCache.LoadSeenSnapshot(currentLang);
+            // Kategorien-Cache leeren, sonst behält Categories die alte Sprache
+            // bis zum nächsten LoadCategoriesAsync-Guard-Check (der aber sofort
+            // returned wenn Count > 0).
+            Categories.Clear();
+            _ = RefreshCatalogAsync();
+        }
     }
+
+    private string? _lastCatalogLanguage;
 
     /// <summary>Nutzt das Detail-Window fürs sofortige Download-Trigger.</summary>
     public Task DownloadFromDetailAsync(int modId, string title)

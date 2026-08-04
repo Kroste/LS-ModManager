@@ -89,6 +89,7 @@
   <!-- ============ Mod path detection status ============ -->
   <data name="ModPath_Found" xml:space="preserve"><value>✓ Mod folder found</value></data>
   <data name="ModPath_NotFound" xml:space="preserve"><value>✗ Mod folder not found</value></data>
+  <data name="ModPath_FirstStartHint" xml:space="preserve"><value>⚠ Mod folder not detected — open ⚙ Settings and set the path manually. Farming Simulator 25 must be installed and started at least once so the mod folder exists.</value></data>
 
   <!-- ============ Mod detail viewmodel ============ -->
   <data name="ModDetail_Loading" xml:space="preserve"><value>Loading details …</value></data>
@@ -166,6 +167,11 @@
   <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Open</value></data>
   <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
   <data name="Catalog_NewBadge" xml:space="preserve"><value>NEW</value></data>
+  <data name="Catalog_SortLabel" xml:space="preserve"><value>Sort:</value></data>
+  <data name="Catalog_Sort_Default" xml:space="preserve"><value>Default</value></data>
+  <data name="Catalog_Sort_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Catalog_Sort_Author" xml:space="preserve"><value>Author</value></data>
+  <data name="Catalog_Sort_Category" xml:space="preserve"><value>Category</value></data>
 
   <!-- ============ Downloads tab ============ -->
   <data name="Downloads_Info" xml:space="preserve"><value>Downloaded but not installed. Install copies the ZIP into your LS25 mod folder.</value></data>
@@ -208,6 +214,7 @@
   <data name="About_InstallerRunning" xml:space="preserve"><value>Installer is running, app is closing …</value></data>
   <data name="About_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
   <data name="About_License" xml:space="preserve"><value>MIT License · © 2026 Lars Krügel (Kroste)</value></data>
+  <data name="About_OpenLogFolder" xml:space="preserve"><value>📁 Log folder</value></data>
 
   <!-- ============ Mod detail window ============ -->
   <data name="ModDetail_OpenInBrowser" xml:space="preserve"><value>🌐 Open in browser</value></data>
