@@ -25,8 +25,11 @@
   Control mit Avalonia-12-`ElementRole`-Rollen, TrayController (Minimize→Hide,
   Close→Exit).
 - Domain: `Mod` (installiert/katalog), `ModMetadata` aus modDesc.xml,
-  `ModDescReader` extrahiert Titel (DE→EN Fallback), Version, Autor, Preview-PNG
-  (icon.png / store_*.png — DDS wird bewusst nicht gelesen).
+  `ModDescReader` extrahiert Titel (DE→EN Fallback), Version, Autor, Preview-PNG.
+  Fallback-Reihenfolge fürs Preview: `iconFilename.png` → `icon.png` →
+  `store_*.png` → beliebiges `*.png` → **DDS-Dekodierung** (`iconFilename.dds`
+  oder beliebiges `*.dds`) via `DdsToPngConverter`. PNG wird immer bevorzugt
+  weil Store-Bilder kuratiert sind, DDS ist typisch nur das kleine In-Game-Icon.
 - Services:
   - `ModPathService`: Windows `Documents/My Games/FarmingSimulator2025/mods`,
     Linux scannt Steam-Proton-Präfixe in **allen** Library-Roots. Roots kommen
@@ -40,6 +43,18 @@
     `mods`-Unterordner (den legt der erste Install an).
   - `ModInstallService`: List/Install/Uninstall/Enable-Toggle (via
     `.zip.disabled`-Suffix). Cached Preview-PNGs unter LocalAppData/cache.
+  - `DdsToPngConverter`: statischer Helper, dekodiert DDS-Bytes (BC1/BC3/
+    uncompressed BGRA/RGB) via Pfim zu rohen Pixeln und encodet die via
+    SkiaSharp als PNG. **Stride-Falle:** Pfim liefert `IImage.Stride`, das
+    je nach Format vom naiven `Width*BPP` abweichen kann (Padding-Alignment)
+    — Wert 1:1 an SkiaSharp weiterreichen sonst gibt es sheared Bilder.
+    **BGRA-Reihenfolge:** DDS legt Pixel in BGRA ab (nicht RGBA), daher
+    `SKColorType.Bgra8888`. **Rgb24** wird auf Bgra8888 expandiert (Alpha=255)
+    weil SkiaSharp kein 24-bit-BGR hat. **GCHandle-Pin** auf die Pixel-Bytes
+    bis Encode fertig ist — SKBitmap.InstallPixels kopiert nicht, der Pointer
+    muss stabil bleiben. **SkiaSharp-Version**: 3.119.4 (matcht Avalonia.Skia
+    12.1.0 transitiv — mit älterer Version bricht `dotnet restore` mit
+    NU1605-Downgrade-Fehler).
   - `AppSettingsService`: JSON unter `%APPDATA%` / `$XDG_CONFIG_HOME`, atomar
     (tmp+move). Defekte Datei wird als `settings.json.broken` gesichert, App
     startet mit Defaults weiter (Kroste-Persistenz-Regel).
@@ -158,13 +173,16 @@
   Toolbar (`💾 Backup` mit Save-Dialog, `📂 Restore` mit Open-Dialog), Progress
   in Statusbar.
 - Tests: xunit.v3 — `ModDescReaderTests` (ZIP-Parsing, Sprach-Fallback,
-  Preview-Extraktion), `ModHubServiceTests` (URL-Builder, HTML-Parser),
-  `ModPathServiceTests` (Plattform-Kandidaten), `ModBackupServiceTests`
-  (Round-Trip Backup→leerräumen→Restore, Manifest-Inhalt, Ablehnung
-  unbekannter Format-Version, InvalidOp bei leerem Ordner). Tests die
-  `XDG_CONFIG_HOME` manipulieren müssen (Prozess-globale Variable!)
-  brauchen `[Collection("EnvironmentIsolation")]` für sequentielle
-  Ausführung — sonst race mit `AppSettingsBrokenBackupTests`.
+  Preview-Extraktion inkl. DDS-Fallback + PNG-Priorität), `ModHubServiceTests`
+  (URL-Builder, HTML-Parser), `ModPathServiceTests` (Plattform-Kandidaten),
+  `ModBackupServiceTests` (Round-Trip Backup→leerräumen→Restore, Manifest-
+  Inhalt, Ablehnung unbekannter Format-Version, InvalidOp bei leerem Ordner),
+  `DdsToPngConverterTests` (unkomprimiertes BGRA-DDS mit generiertem Fixture,
+  ungültiger/zu kurzer Input). DDS-Header-Builder ist `internal static` in
+  `DdsToPngConverterTests` und wird von `ModDescReaderTests` mitverwendet —
+  Layout mit Byte-Offsets kommentiert. Tests die `XDG_CONFIG_HOME` manipulieren
+  müssen (Prozess-globale Variable!) brauchen `[Collection("EnvironmentIsolation")]`
+  für sequentielle Ausführung — sonst race mit `AppSettingsBrokenBackupTests`.
 
 ## Roadmap
 
@@ -176,9 +194,6 @@
   - _(Backup/Restore + L10N-Framework erledigt)_
 
 - **Groß (mehrere Runden):**
-  - **DDS-Decoder** für Icons (BC1/BC3, evtl. mit Pfim-NuGet), damit Mods ohne
-    PNG-Icon trotzdem eine Preview haben (aktuell kompensiert der ModHub-
-    Cover-Backfill das für alle im Katalog gelisteten Mods).
   - **KI-Features** nach Allpaca-Muster (Multi-Provider, Ollama-Default):
     Beschreibungs-Zusammenfassung, Empfehlungssystem („Ähnliche Mods wie X").
 
@@ -205,9 +220,11 @@
     „Browser öffnen"-Route bleibt als Ghost-Button „🌐 Details" erhalten, damit
     der User bei komplexeren Fällen (Kommentare lesen, Screenshots) selbst auf
     die Detail-Seite gehen kann.
-  - DDS-Icons werden bewusst nicht dekodiert — Avalonia kann DDS nicht nativ
-    rendern und ein eigener Decoder wäre unverhältnismäßig. Wir suchen nach
-    PNG-Alternativen in der ZIP (`icon.png`, `store_*.png`).
+  - DDS-Icons werden jetzt via Pfim + SkiaSharp dekodiert (`DdsToPngConverter`).
+    Vorher: „bewusst nicht dekodiert, ein eigener Decoder wäre unverhältnismäßig"
+    — mit Pfim (pure C#, MIT, ~50 KB) und dem Avalonia-transitiven SkiaSharp ist
+    das aber ein 100-Zeilen-Helper. Fallback-Reihenfolge im `ModDescReader`: erst
+    PNG-Alternativen (`iconFilename.png`, `icon.png`, `store_*.png`), dann DDS.
   - `.zip.disabled` als Deaktivierungs-Konvention: LS25 lädt ausschließlich
     Dateien mit exakter `.zip`-Endung. Die Datei bleibt so im Ordner, wird aber
     ignoriert — kein Löschen nötig.
