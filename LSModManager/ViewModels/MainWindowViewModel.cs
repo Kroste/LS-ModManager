@@ -1492,32 +1492,118 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Katalog-API für das Detail-VM: Kandidaten für „Ähnliche Mods"-KI-Empfehlung.
-    /// Filter: gleiche Kategorie, nicht der aktuelle Mod selbst; max <paramref name="maxCount"/>
-    /// Einträge um den Prompt kompakt zu halten (der Rest wäre der KI eh zu viel).
+    /// Max <paramref name="maxCount"/> Einträge, um den Prompt kompakt zu halten.
+    ///
+    /// <para><b>Mehrstufige Suche</b>, weil die GIANTS-Listenseite als
+    /// „Category" nur Rubrik-Marker wie „NEW!"/„UPDATE!" liefert — die echte
+    /// inhaltliche Kategorie (z.B. „Traktoren") steht nur auf der Detail-Seite.
+    /// Ein reiner Category-Vergleich Detail↔Katalog trifft deshalb praktisch
+    /// nie. Fallback-Kette: exakter Category-Match → Category-String als
+    /// Substring in Titel/Autor → gleicher Autor → zufällige Auswahl. So
+    /// bekommt die KI immer eine sinnvolle Kandidatenliste, selbst wenn
+    /// der Katalog die Kategorie nicht kennt.</para>
     /// </summary>
     public IReadOnlyList<ModHubEntry> GetCatalogCandidatesForSimilar(
-        string category, string excludeDetailUrl, int maxCount = 30)
+        string category, string author, string excludeDetailUrl, int maxCount = 30)
     {
-        if (string.IsNullOrWhiteSpace(category)) return Array.Empty<ModHubEntry>();
         lock (_catalogLock)
         {
-            return _allCatalog
-                .Where(e => string.Equals(e.Category, category, StringComparison.OrdinalIgnoreCase))
-                .Where(e => !string.Equals(e.DetailUrl, excludeDetailUrl, StringComparison.Ordinal))
+            bool NotSelf(ModHubEntry e) =>
+                !string.Equals(e.DetailUrl, excludeDetailUrl, StringComparison.Ordinal);
+
+            // Stufe 1: exakter Category-Match (funktioniert bei Modhoster-
+            // Einträgen die eine echte Kategorie tragen, bei GIANTS selten).
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                var byCategory = _allCatalog
+                    .Where(e => string.Equals(e.Category, category, StringComparison.OrdinalIgnoreCase))
+                    .Where(NotSelf)
+                    .Take(maxCount)
+                    .ToList();
+                if (byCategory.Count > 0)
+                {
+                    Log.Info("Ähnliche-Kandidaten via Category-Match: {n}", byCategory.Count);
+                    return byCategory;
+                }
+
+                // Stufe 2: Category-String als Substring in Titel oder Autor.
+                // „Traktoren" trifft „John Deere Traktor Pack", „Anhänger"
+                // trifft „Krampe Anhänger" usw. Case-insensitive.
+                var bySubstring = _allCatalog
+                    .Where(e => (e.Title?.Contains(category, StringComparison.OrdinalIgnoreCase) ?? false)
+                             || (e.Author?.Contains(category, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .Where(NotSelf)
+                    .Take(maxCount)
+                    .ToList();
+                if (bySubstring.Count > 0)
+                {
+                    Log.Info("Ähnliche-Kandidaten via Category-Substring: {n}", bySubstring.Count);
+                    return bySubstring;
+                }
+            }
+
+            // Stufe 3: gleicher Autor (wenn dieser Mod z.B. Teil einer Mod-Serie
+            // desselben Erstellers ist — typisch für John Deere-Packs etc.).
+            if (!string.IsNullOrWhiteSpace(author))
+            {
+                var byAuthor = _allCatalog
+                    .Where(e => string.Equals(e.Author, author, StringComparison.OrdinalIgnoreCase))
+                    .Where(NotSelf)
+                    .Take(maxCount)
+                    .ToList();
+                if (byAuthor.Count > 0)
+                {
+                    Log.Info("Ähnliche-Kandidaten via Author-Match: {n}", byAuthor.Count);
+                    return byAuthor;
+                }
+            }
+
+            // Stufe 4: Fallback — der Katalog kennt weder Kategorie noch Autor
+            // dieses Mods. Wir geben eine zufällige Auswahl, damit die KI
+            // wenigstens etwas hat woraus sie auswählen kann.
+            var random = new Random(excludeDetailUrl.GetHashCode()); // reproduzierbar pro Mod
+            var fallback = _allCatalog
+                .Where(NotSelf)
+                .OrderBy(_ => random.Next())
                 .Take(maxCount)
                 .ToList();
+            Log.Debug("Ähnliche-Kandidaten via Random-Fallback: {n}", fallback.Count);
+            return fallback;
         }
     }
 
     /// <summary>Mapping-Helper: KI-Antwort enthält Mod-Titel als Strings —
-    /// wir suchen die zugehörigen Katalog-Einträge zurück (Titel-Match).</summary>
+    /// wir suchen die zugehörigen Katalog-Einträge zurück. Mehrstufig:
+    /// exakter Titel-Match (case-insensitive, getrimmt), dann Substring-Match
+    /// (KI kürzt manchmal Titel, „AutoDrive" statt „AutoDrive Beta 1.2.3").</summary>
     public IReadOnlyList<ModHubEntry> FindCatalogEntriesByTitles(IEnumerable<string> titles)
     {
-        var wanted = new HashSet<string>(titles, StringComparer.OrdinalIgnoreCase);
+        var wanted = titles.Select(t => t.Trim())
+                            .Where(t => t.Length > 0)
+                            .ToList();
         if (wanted.Count == 0) return Array.Empty<ModHubEntry>();
+
+        var wantedExact = new HashSet<string>(wanted, StringComparer.OrdinalIgnoreCase);
         lock (_catalogLock)
         {
-            return _allCatalog.Where(e => wanted.Contains(e.Title)).ToList();
+            // Exakt zuerst — schneller und präziser.
+            var exact = _allCatalog.Where(e => wantedExact.Contains(e.Title?.Trim() ?? "")).ToList();
+            if (exact.Count > 0) return exact;
+
+            // Fallback: Substring-Match. Für jeden gewünschten Titel: den ersten
+            // Katalog-Eintrag der ihn enthält (verhindert Duplikate wenn mehrere
+            // Katalog-Titel dieselbe Substring haben).
+            var result = new List<ModHubEntry>();
+            var seenUrls = new HashSet<string>();
+            foreach (var title in wanted)
+            {
+                var match = _allCatalog.FirstOrDefault(e =>
+                    (e.Title?.Contains(title, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    title.Contains(e.Title ?? "", StringComparison.OrdinalIgnoreCase));
+                if (match is not null && seenUrls.Add(match.DetailUrl))
+                    result.Add(match);
+            }
+            return result;
         }
     }
 

@@ -48,12 +48,7 @@ public sealed partial class ModDetailViewModel : ObservableObject
 
     [ObservableProperty] private string _title = "";
     [ObservableProperty] private string _author = "";
-    // Category triggert CanFindSimilar — Category wird erst nach dem async
-    // InitializeAsync gesetzt, ohne diesen Notify bliebe der „Ähnliche Mods"-
-    // Button dauerhaft disabled (er wird beim Ctor mit Category="" evaluiert).
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(FindSimilarModsCommand))]
-    private string _category = "";
+    [ObservableProperty] private string _category = "";
     [ObservableProperty] private string _version = "";
     [ObservableProperty] private string _sizeText = "";
     [ObservableProperty] private string _releaseDate = "";
@@ -222,10 +217,11 @@ public sealed partial class ModDetailViewModel : ObservableObject
             OnPropertyChanged(nameof(HasSimilarResults)); // ggf. Card wegblenden bei erneuter Suche
             StatusText = L.T("ModDetail_AiSimilarLoading");
 
-            var candidates = _main.GetCatalogCandidatesForSimilar(Category, DetailUrl);
+            var candidates = _main.GetCatalogCandidatesForSimilar(Category, Author, DetailUrl);
             if (candidates.Count == 0)
             {
                 SimilarNoResults = true;
+                OnPropertyChanged(nameof(HasSimilarResults));
                 StatusText = "";
                 return;
             }
@@ -240,14 +236,16 @@ public sealed partial class ModDetailViewModel : ObservableObject
             foreach (var m in matches) SimilarMods.Add(new ModHubItemViewModel(m));
 
             SimilarNoResults = SimilarMods.Count == 0;
-            // Notify explizit — HasSimilarResults liest SimilarMods.Count, das
-            // wird durch OnSimilarNoResultsChanged nur getriggert wenn sich der
-            // Bool tatsächlich ändert (bei „0 Treffer" bleibt SimilarNoResults
-            // auf false wenn's vorher false war → kein Notify).
             OnPropertyChanged(nameof(HasSimilarResults));
             StatusText = "";
-            Log.Info("KI-Empfehlung: {n} ähnliche Mods für {t} (aus {c} Kandidaten)",
-                SimilarMods.Count, Title, candidates.Count);
+            Log.Info("KI-Empfehlung für {t}: {c} Kandidaten -> KI gab {p} Titel zurück -> {n} im Katalog gemappt",
+                Title, candidates.Count, titles.Count, SimilarMods.Count);
+            if (SimilarMods.Count == 0)
+            {
+                // Kein Match — hilfreich für die Diagnose der Titel-Fuzzy-Logik.
+                Log.Info("KI-Antwort (kein Match): {response}",
+                    response.Length > 300 ? response[..300] + "…" : response);
+            }
         }
         catch (Exception ex)
         {
@@ -257,7 +255,11 @@ public sealed partial class ModDetailViewModel : ObservableObject
         finally { IsSearchingSimilar = false; }
     }
 
-    private bool CanFindSimilar() => IsAiEnabled && !IsSearchingSimilar && !string.IsNullOrWhiteSpace(Category);
+    // Category-Check bewusst weg — GetCatalogCandidatesForSimilar hat einen
+    // mehrstufigen Fallback (Category → Titel/Autor-Substring → Author-Match
+    // → Random), sodass immer Kandidaten kommen. Das Feature wäre sonst bei
+    // Mods ohne erkennbare Kategorie ungewollt gesperrt.
+    private bool CanFindSimilar() => IsAiEnabled && !IsSearchingSimilar;
 
     /// <summary>Klick auf eine „Ähnliche Mods"-Card — öffnet den Browser.
     /// Bewusst kein neues Detail-Fenster (unnötige Fenster-Kette, User kann
