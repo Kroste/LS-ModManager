@@ -48,13 +48,22 @@ public sealed partial class ModDetailViewModel : ObservableObject
 
     [ObservableProperty] private string _title = "";
     [ObservableProperty] private string _author = "";
-    [ObservableProperty] private string _category = "";
+    // Category triggert CanFindSimilar — Category wird erst nach dem async
+    // InitializeAsync gesetzt, ohne diesen Notify bliebe der „Ähnliche Mods"-
+    // Button dauerhaft disabled (er wird beim Ctor mit Category="" evaluiert).
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindSimilarModsCommand))]
+    private string _category = "";
     [ObservableProperty] private string _version = "";
     [ObservableProperty] private string _sizeText = "";
     [ObservableProperty] private string _releaseDate = "";
     [ObservableProperty] private string _platform = "";
     [ObservableProperty] private string _rating = "";
-    [ObservableProperty] private string _description = "";
+    // Description triggert CanSummarize — analog zu Category, damit der Button
+    // bei leerer Description (Load-Fehler etc.) korrekt disabled bleibt.
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SummarizeCommand))]
+    private string _description = "";
     [ObservableProperty] private string _statusText = "";
     [ObservableProperty] private bool _isLoading = true;
     [ObservableProperty]
