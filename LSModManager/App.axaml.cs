@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using LSModManager.Localization;
 using LSModManager.Services;
 using LSModManager.ViewModels;
 using LSModManager.Views;
@@ -29,6 +30,13 @@ public partial class App : Application
 
         // Globaler Exception-Handler VOR dem ersten Fenster registrieren.
         GlobalExceptionHandler.Install();
+
+        // UI-Sprache VOR dem ersten Fenster-Bau setzen — sonst rendert das
+        // MainWindow kurz in einer anderen Sprache und flackert beim späteren
+        // Wechsel. Bei null (Erstinstallation) bleibt die OS-Kultur.
+        var storedCulture = Services.GetRequiredService<AppSettingsService>().Current.UiCulture;
+        if (!string.IsNullOrWhiteSpace(storedCulture))
+            LocalizationService.Instance.SetCulture(storedCulture);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

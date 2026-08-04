@@ -28,6 +28,13 @@ public sealed class AppSettings
     public int SteamAppId { get; set; } = 2300320;
 
     /// <summary>
+    /// UI-Sprache (ISO-Code, z.B. "en"/"de"). Wird beim App-Start vor dem
+    /// MainWindow-Bau in <see cref="Localization.LocalizationService"/>
+    /// gesetzt. Null → Betriebssystem-Kultur.
+    /// </summary>
+    public string? UiCulture { get; set; }
+
+    /// <summary>
     /// Sprachfilter für den Katalog: <c>de/en/fr/es/it/pl</c>. Setter sanitisiert
     /// gegen Müll (z.B. falsche ComboBox-Bindings, die früher das ComboBoxItem-
     /// Objekt statt den String persistiert haben).
