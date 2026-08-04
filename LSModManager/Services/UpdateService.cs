@@ -178,7 +178,11 @@ public sealed class UpdateService : IDisposable
     private void LaunchInstaller(string downloadedAssetPath, string workDir)
     {
         var pid = Environment.ProcessId;
-        var appExe = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+        // Environment.ProcessPath ist in normalem UND single-file-Publish zuverlässig.
+        // Assembly.Location wäre der Fallback, ist aber in single-file-apps immer leer
+        // (Compiler-Warning IL3000) — deswegen hart werfen wenn ProcessPath null ist.
+        var appExe = Environment.ProcessPath
+            ?? throw new InvalidOperationException("Konnte den eigenen Prozesspfad nicht ermitteln.");
         var installBase = OperatingSystem.IsWindows()
             ? AppContext.BaseDirectory
             : AppContext.BaseDirectory;
