@@ -39,7 +39,6 @@ public sealed partial class InstalledModItemViewModel : ObservableObject
     public string Author => Model.Metadata?.Author ?? "";
     public string Version => Model.Metadata?.Version ?? "";
     public string SizeText => FormatSize(Model.FileSizeBytes);
-    public string StatusText => Model.IsEnabled ? "Aktiv" : "Deaktiviert";
     public bool HasError => Model.ReadError is { Length: > 0 };
     public string? ErrorText => Model.ReadError;
     public bool MultiplayerSupported => Model.Metadata?.MultiplayerSupported ?? false;

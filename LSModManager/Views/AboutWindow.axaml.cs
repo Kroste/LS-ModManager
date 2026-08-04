@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using LSModManager.Localization;
 using LSModManager.Services;
 using NLog;
 
@@ -23,7 +24,7 @@ public partial class AboutWindow : ChromeWindow
     public AboutWindow(UpdateService updateService) : this()
     {
         _updateService = updateService;
-        VersionText.Text = $"Version {updateService.CurrentVersion}";
+        VersionText.Text = L.T("About_VersionPrefix") + updateService.CurrentVersion;
         UpdateButton.Click += OnCheckUpdate;
         InstallUpdateButton.Click += OnInstallUpdate;
         GithubButton.Click += (_, _) => Launch(GithubUrl);
@@ -35,34 +36,36 @@ public partial class AboutWindow : ChromeWindow
         if (_updateService is null) return;
         UpdateButton.IsEnabled = false;
         InstallUpdateButton.IsVisible = false;
-        UpdateResult.Text = "Prüfe …";
+        UpdateResult.Text = L.T("About_Checking");
         try
         {
             var result = await _updateService.CheckForUpdateAsync();
             if (result.UpdateAvailable)
             {
-                UpdateResult.Text = $"Version {result.LatestVersion} verfügbar!";
+                UpdateResult.Text = L.T("About_VersionAvailablePrefix")
+                    + result.LatestVersion
+                    + L.T("About_VersionAvailableSuffix");
                 if (result.InstallableHere)
                 {
                     InstallUpdateButton.IsVisible = true;
-                    InstallUpdateButton.Content = $"⬇ Update auf v{result.LatestVersion} installieren";
+                    InstallUpdateButton.Content = L.T("About_InstallUpdatePrefix") + result.LatestVersion;
                 }
                 else
                 {
-                    UpdateResult.Text += " (kein passendes Asset für diese Plattform — auf GitHub laden)";
+                    UpdateResult.Text += L.T("About_NoAssetForPlatform");
                 }
             }
             else
             {
                 UpdateResult.Text = result.LatestVersion is null
-                    ? "Kein Zugriff auf GitHub."
-                    : "Du hast die aktuelle Version.";
+                    ? L.T("About_NoAccess")
+                    : L.T("About_UpToDate");
             }
         }
         catch (Exception ex)
         {
             Log.Warn(ex, "Update-Prüfung im Über-Fenster fehlgeschlagen");
-            UpdateResult.Text = "Prüfung fehlgeschlagen.";
+            UpdateResult.Text = L.T("About_CheckFailed");
         }
         finally
         {
@@ -76,22 +79,22 @@ public partial class AboutWindow : ChromeWindow
         UpdateButton.IsEnabled = false;
         InstallUpdateButton.IsEnabled = false;
         UpdateProgress.IsVisible = true;
-        UpdateResult.Text = "Lade Update …";
+        UpdateResult.Text = L.T("About_Downloading");
         try
         {
             var progress = new Progress<double>(f =>
             {
                 UpdateProgress.Value = f;
-                UpdateResult.Text = $"Lade Update … {f * 100:F0}%";
+                UpdateResult.Text = L.T("About_DownloadingPrefix") + $"{f * 100:F0}%";
             });
             await _updateService.DownloadAndInstallAsync(progress);
             // Kehrt normalerweise nicht zurück — die App beendet sich selbst.
-            UpdateResult.Text = "Installer läuft, App beendet sich …";
+            UpdateResult.Text = L.T("About_InstallerRunning");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Update-Installation fehlgeschlagen");
-            UpdateResult.Text = $"Fehler: {ex.Message}";
+            UpdateResult.Text = L.T("About_ErrorPrefix") + ex.Message;
             UpdateProgress.IsVisible = false;
             UpdateButton.IsEnabled = true;
             InstallUpdateButton.IsEnabled = true;

@@ -3,12 +3,13 @@
         xmlns:views="using:LSModManager.Views"
         xmlns:controls="using:LSModManager.Controls"
         xmlns:vm="using:LSModManager.ViewModels"
+        xmlns:loc="using:LSModManager.Localization"
         x:Class="LSModManager.Views.ModDetailWindow"
         x:DataType="vm:ModDetailViewModel"
         Width="820" Height="720"
         MinWidth="600" MinHeight="480"
         WindowStartupLocation="CenterOwner"
-        Title="Mod-Details"
+        Title="{loc:Tr Window_ModDetail}"
         Background="{DynamicResource KrosteBackgroundBrush}">
 
     <DockPanel>
@@ -23,10 +24,10 @@
                 <ProgressBar Grid.Column="1" IsIndeterminate="True"
                              Width="120" Margin="12,0"
                              IsVisible="{Binding IsLoading}" />
-                <Button Grid.Column="2" Content="🌐 Im Browser"
+                <Button Grid.Column="2" Content="{loc:Tr ModDetail_OpenInBrowser}"
                         Margin="0,0,8,0"
                         Command="{Binding OpenInBrowserCommand}" />
-                <Button Grid.Column="3" Classes="accent" Content="📥 Herunterladen"
+                <Button Grid.Column="3" Classes="accent" Content="{loc:Tr ModDetail_Download}"
                         Command="{Binding DownloadCommand}" />
             </Grid>
         </Border>
@@ -63,7 +64,7 @@
                 <Border Classes="card"
                         IsVisible="{Binding ScreenshotUrls.Count}">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="SCREENSHOTS" Classes="section-label" />
+                        <TextBlock Text="{loc:Tr ModDetail_Screenshots}" Classes="section-label" />
                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Disabled">
                             <ItemsControl ItemsSource="{Binding ScreenshotUrls}">
@@ -90,7 +91,7 @@
                 <!-- Beschreibung -->
                 <Border Classes="card">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="BESCHREIBUNG" Classes="section-label" />
+                        <TextBlock Text="{loc:Tr ModDetail_Description}" Classes="section-label" />
                         <TextBox Text="{Binding Description, Mode=OneWay}"
                                  IsReadOnly="True"
                                  AcceptsReturn="True"

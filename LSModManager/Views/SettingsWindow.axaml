@@ -9,25 +9,25 @@
         Width="620" Height="440"
         MinWidth="500" MinHeight="360"
         WindowStartupLocation="CenterOwner"
-        Title="Einstellungen"
+        Title="{loc:Tr Window_Settings}"
         Background="{DynamicResource KrosteBackgroundBrush}">
 
     <DockPanel>
-        <controls:TitleBar DockPanel.Dock="Top" Title="Einstellungen" />
+        <controls:TitleBar DockPanel.Dock="Top" Title="{loc:Tr Window_Settings}" />
 
         <Border DockPanel.Dock="Top" Padding="20,14,20,10">
             <StackPanel Spacing="2">
-                <TextBlock Classes="h1" Text="Einstellungen" />
+                <TextBlock Classes="h1" Text="{loc:Tr Window_Settings}" />
                 <TextBlock Classes="secondary"
-                           Text="Mod-Pfad und Katalog-Sprache anpassen." />
+                           Text="{loc:Tr Settings_Subtitle}" />
             </StackPanel>
         </Border>
 
         <!-- Buttons unten -->
         <Border DockPanel.Dock="Bottom" Padding="20,10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                <Button Classes="ghost" Content="Abbrechen" Click="OnCancelClick" />
-                <Button Classes="accent" Content="Speichern" Click="OnSaveClick" />
+                <Button Classes="ghost" Content="{loc:Tr Common_Cancel}" Click="OnCancelClick" />
+                <Button Classes="accent" Content="{loc:Tr Common_Save}" Click="OnSaveClick" />
             </StackPanel>
         </Border>
 
@@ -57,22 +57,22 @@
 
                 <Border Classes="card">
                     <StackPanel Spacing="8">
-                        <TextBlock Classes="h2" Text="LS25-Mod-Ordner" />
+                        <TextBlock Classes="h2" Text="{loc:Tr Settings_Section_ModFolder}" />
                         <TextBlock Classes="muted" FontSize="12" TextWrapping="Wrap"
-                                   Text="Standardpfad wird automatisch erkannt (Windows: Dokumente/My Games/FarmingSimulator2025/mods, Linux: Steam-Proton-Präfix). Manueller Pfad überschreibt die Auto-Erkennung." />
+                                   Text="{loc:Tr Settings_ModFolder_Description}" />
 
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Erkannt" Classes="section-label" />
+                            <TextBlock Text="{loc:Tr Settings_ModFolder_Detected}" Classes="section-label" />
                             <TextBlock Text="{Binding DetectedPath}" Classes="secondary" TextWrapping="Wrap" />
                         </StackPanel>
 
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Manueller Pfad (optional)" Classes="section-label" />
+                            <TextBlock Text="{loc:Tr Settings_ModFolder_ManualPath}" Classes="section-label" />
                             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                                 <TextBox Text="{Binding ModPathOverride}"
-                                         PlaceholderText="Leer lassen für Auto-Erkennung" />
-                                <Button Grid.Column="1" Content="Durchsuchen…" Click="OnBrowseClick" />
-                                <Button Grid.Column="2" Content="Neu erkennen"
+                                         PlaceholderText="{loc:Tr Settings_ModFolder_ManualPathPlaceholder}" />
+                                <Button Grid.Column="1" Content="{loc:Tr Settings_ModFolder_Browse}" Click="OnBrowseClick" />
+                                <Button Grid.Column="2" Content="{loc:Tr Settings_ModFolder_Redetect}"
                                         Command="{Binding DetectCommand}" />
                             </Grid>
                         </StackPanel>
@@ -81,19 +81,19 @@
 
                 <Border Classes="card">
                     <StackPanel Spacing="8">
-                        <TextBlock Classes="h2" Text="ModHub-Katalog" />
+                        <TextBlock Classes="h2" Text="{loc:Tr Settings_Section_Catalog}" />
                         <TextBlock Classes="muted" FontSize="12"
-                                   Text="Sprache und Cache-Verhalten für den ModHub-Katalog." />
+                                   Text="{loc:Tr Settings_Catalog_Description}" />
 
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Sprache" Classes="section-label" />
+                            <TextBlock Text="{loc:Tr Settings_Catalog_Language}" Classes="section-label" />
                             <ComboBox ItemsSource="{Binding SupportedLanguages}"
                                       SelectedItem="{Binding CatalogLanguage}"
                                       Width="200" HorizontalAlignment="Left" />
                         </StackPanel>
 
                         <StackPanel Spacing="2">
-                            <TextBlock Text="Katalog-Cache automatisch aktualisieren" Classes="section-label" />
+                            <TextBlock Text="{loc:Tr Settings_Catalog_AutoRefresh}" Classes="section-label" />
                             <ComboBox ItemsSource="{Binding RefreshOptions}"
                                       SelectedItem="{Binding SelectedRefreshOption}"
                                       Width="360" HorizontalAlignment="Left">
@@ -104,7 +104,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                             <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
-                                       Text="Beim Start wird der Cache neu geladen, wenn er älter als die eingestellte Zeit ist. „↺“ im Katalog-Tab erzwingt manuell einen Refresh." />
+                                       Text="{loc:Tr Settings_Catalog_AutoRefreshHint}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

@@ -5,18 +5,19 @@
         xmlns:views="using:LSModManager.Views"
         xmlns:controls="using:LSModManager.Controls"
         xmlns:vm="using:LSModManager.ViewModels"
+        xmlns:loc="using:LSModManager.Localization"
         mc:Ignorable="d"
         d:DesignWidth="1180" d:DesignHeight="760"
         x:Class="LSModManager.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1180" Height="760"
         MinWidth="880" MinHeight="560"
-        Title="LS-ModManager"
+        Title="{loc:Tr Window_Main}"
         Background="{DynamicResource KrosteBackgroundBrush}"
         DragDrop.AllowDrop="True">
 
     <DockPanel>
-        <controls:TitleBar DockPanel.Dock="Top" Title="LS-ModManager" />
+        <controls:TitleBar DockPanel.Dock="Top" Title="{loc:Tr Window_Main}" />
 
         <!-- Header -->
         <Border DockPanel.Dock="Top" Padding="18,14,18,10">
@@ -28,7 +29,7 @@
                                    Text="{Binding CurrentVersionText}" Margin="0,0,0,4" />
                     </StackPanel>
                     <TextBlock Classes="secondary"
-                               Text="Mods für Landwirtschaftssimulator 25 installieren, verwalten, entdecken." />
+                               Text="{loc:Tr Main_Subtitle}" />
                 </StackPanel>
                 <TextBlock Grid.Column="1" VerticalAlignment="Center"
                            Classes="secondary" FontSize="12"
@@ -42,11 +43,11 @@
             <StackPanel Orientation="Horizontal" Spacing="14">
 
                 <StackPanel>
-                    <TextBlock Classes="section-label" Text="SPIEL" />
+                    <TextBlock Classes="section-label" Text="{loc:Tr Main_Section_Game}" />
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Classes="accent" Content="🚜 LS25 starten"
+                        <Button Classes="accent" Content="{loc:Tr Main_LaunchGame}"
                                 Command="{Binding LaunchGameCommand}" />
-                        <Button Content="🔄 Updates prüfen"
+                        <Button Content="{loc:Tr Main_CheckUpdates}"
                                 Command="{Binding CheckModUpdatesCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -54,11 +55,11 @@
                 <Rectangle Classes="divider-v" />
 
                 <StackPanel>
-                    <TextBlock Classes="section-label" Text="INSTALLATION" />
+                    <TextBlock Classes="section-label" Text="{loc:Tr Main_Section_Installation}" />
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="📦 ZIP installieren…"
+                        <Button Content="{loc:Tr Main_InstallZip}"
                                 Click="OnInstallZipClick" />
-                        <Button Content="↺ Aktualisieren"
+                        <Button Content="{loc:Tr Main_Refresh}"
                                 Command="{Binding RefreshInstalledCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -66,14 +67,14 @@
                 <Rectangle Classes="divider-v" />
 
                 <StackPanel>
-                    <TextBlock Classes="section-label" Text="SYSTEM" />
+                    <TextBlock Classes="section-label" Text="{loc:Tr Main_Section_System}" />
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="📁 Mod-Ordner"
+                        <Button Content="{loc:Tr Main_OpenModFolder}"
                                 Command="{Binding OpenModFolderCommand}" />
-                        <Button Content="⬇ Downloads-Ordner"
+                        <Button Content="{loc:Tr Main_OpenDownloadsFolder}"
                                 Command="{Binding OpenDownloadsFolderCommand}" />
-                        <Button Content="⚙ Einstellungen" Click="OnSettingsClick" />
-                        <Button Classes="ghost" Content="ⓘ Über" Click="OnAboutClick" />
+                        <Button Content="{loc:Tr Main_Settings}" Click="OnSettingsClick" />
+                        <Button Classes="ghost" Content="{loc:Tr Main_About}" Click="OnAboutClick" />
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
@@ -89,8 +90,14 @@
                 <ProgressBar Grid.Column="1" IsIndeterminate="True"
                              Width="120" Margin="12,0"
                              IsVisible="{Binding IsBusy}" />
-                <TextBlock Grid.Column="2" Classes="muted" VerticalAlignment="Center"
-                           Text="{Binding InstalledMods.Count, StringFormat='{}{0} installiert'}" />
+                <!-- Zähler-Suffix: Zahl aus Binding + statischer Suffix aus {loc:Tr} —
+                     so bleibt Live-Sprachwechsel funktional ohne VM-Notify-Handler. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <TextBlock Classes="muted" VerticalAlignment="Center"
+                               Text="{Binding InstalledMods.Count}" />
+                    <TextBlock Classes="muted" VerticalAlignment="Center"
+                               Text="{loc:Tr Statusbar_InstalledCountSuffix}" />
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -98,22 +105,25 @@
         <TabControl Padding="14,4,14,10">
 
             <!-- ==== Installierte Mods ==== -->
-            <TabItem Header="📦 Installiert">
+            <TabItem Header="{loc:Tr Tab_Installed}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
                         <TextBox DockPanel.Dock="Top" Margin="14,10,14,6"
                                  Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="🔍  Installierte Mods filtern (Titel, Autor, Dateiname) …" />
+                                 PlaceholderText="{loc:Tr Installed_SearchPlaceholder}" />
                         <!-- Bulk-Toolbar: sichtbar sobald mind. 1 Item markiert ist (Ctrl-Klick / Shift-Klick) -->
                         <Border DockPanel.Dock="Top" Padding="14,4,14,6"
                                 Background="{DynamicResource KrosteAccentSoftBrush}"
                                 IsVisible="{Binding #InstalledList.SelectedItems.Count}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
+                                <!-- Zähler-Prefix: Zahl aus Binding + statischer Suffix aus {loc:Tr} -->
                                 <TextBlock VerticalAlignment="Center"
-                                           Text="{Binding #InstalledList.SelectedItems.Count, StringFormat='{}{0} ausgewählt:'}" />
-                                <Button Content="⏻ Alle aktivieren" Click="OnBulkEnableClick" />
-                                <Button Content="⏻ Alle deaktivieren" Click="OnBulkDisableClick" />
-                                <Button Classes="danger" Content="🗑 Alle deinstallieren"
+                                           Text="{Binding #InstalledList.SelectedItems.Count}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{loc:Tr Installed_BulkSelectedSuffix}" />
+                                <Button Content="{loc:Tr Installed_BulkEnable}" Click="OnBulkEnableClick" />
+                                <Button Content="{loc:Tr Installed_BulkDisable}" Click="OnBulkDisableClick" />
+                                <Button Classes="danger" Content="{loc:Tr Installed_BulkUninstall}"
                                         Click="OnBulkUninstallClick" />
                             </StackPanel>
                         </Border>
@@ -150,14 +160,26 @@
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal" Spacing="14">
                                                 <TextBlock Text="{Binding SizeText}" Classes="secondary" FontSize="12" />
-                                                <TextBlock Text="{Binding StatusText}" Classes="secondary" FontSize="12"
-                                                           Foreground="{DynamicResource LsFarmingGreenBrush}" />
-                                                <TextBlock Text="🌐 Multiplayer" Classes="secondary" FontSize="12"
+                                                <!-- Aktiv/Deaktiviert: zwei alternative TextBlocks statt VM-Property,
+                                                     damit Live-Sprachwechsel automatisch durchschlägt. -->
+                                                <TextBlock Text="{loc:Tr Installed_StatusActive}" Classes="secondary" FontSize="12"
+                                                           Foreground="{DynamicResource LsFarmingGreenBrush}"
+                                                           IsVisible="{Binding Model.IsEnabled}" />
+                                                <TextBlock Text="{loc:Tr Installed_StatusDisabled}" Classes="secondary" FontSize="12"
+                                                           Foreground="{DynamicResource LsFarmingGreenBrush}"
+                                                           IsVisible="{Binding !Model.IsEnabled}" />
+                                                <TextBlock Text="{loc:Tr Installed_Multiplayer}" Classes="secondary" FontSize="12"
                                                            IsVisible="{Binding MultiplayerSupported}" />
-                                                <TextBlock Text="{Binding UpdateAvailableVersion, StringFormat='⬆ Update: v{0}'}"
-                                                           FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource KrosteGoldBrush}"
-                                                           IsVisible="{Binding HasUpdate}" />
+                                                <!-- Update-Badge: Prefix aus {loc:Tr} + Version-Zahl aus Binding -->
+                                                <StackPanel Orientation="Horizontal" Spacing="0"
+                                                            IsVisible="{Binding HasUpdate}">
+                                                    <TextBlock Text="{loc:Tr Installed_UpdateAvailablePrefix}"
+                                                               FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource KrosteGoldBrush}" />
+                                                    <TextBlock Text="{Binding UpdateAvailableVersion}"
+                                                               FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource KrosteGoldBrush}" />
+                                                </StackPanel>
                                             </StackPanel>
                                             <TextBlock Text="{Binding Model.FileName}"
                                                        Classes="muted" FontSize="10" Margin="0,2,0,0" />
@@ -168,15 +190,15 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
-                                            <Button Classes="accent" Content="⬇ Update installieren"
+                                            <Button Classes="accent" Content="{loc:Tr Installed_InstallUpdate}"
                                                     IsVisible="{Binding HasUpdate}"
                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UpdateModCommand}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Content="⏻ (De-)Aktivieren"
+                                            <Button Content="{loc:Tr Installed_ToggleEnabled}"
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleEnabledCommand}"
                                                     CommandParameter="{Binding}" />
-                                            <Button Classes="danger" Content="🗑 Deinstallieren"
+                                            <Button Classes="danger" Content="{loc:Tr Installed_Uninstall}"
                                                     HorizontalAlignment="Right"
                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UninstallCommand}"
                                                     CommandParameter="{Binding}" />
@@ -191,7 +213,7 @@
             </TabItem>
 
             <!-- ==== ModHub-Katalog ==== -->
-            <TabItem Header="🌐 ModHub-Katalog">
+            <TabItem Header="{loc:Tr Tab_Catalog}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
                         <!-- Katalog-Toolbar: Kategorie + Suche + Refresh -->
@@ -199,7 +221,7 @@
                               ColumnSpacing="8">
                             <ComboBox ItemsSource="{Binding Categories}"
                                       SelectedItem="{Binding SelectedCategory}"
-                                      PlaceholderText="Alle Kategorien">
+                                      PlaceholderText="{loc:Tr Catalog_AllCategories}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Label}" />
@@ -208,9 +230,9 @@
                             </ComboBox>
                             <TextBox Grid.Column="1"
                                      Text="{Binding CatalogSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     PlaceholderText="🔍  Suchen (Titel, Autor, Kategorie) …" />
+                                     PlaceholderText="{loc:Tr Catalog_SearchPlaceholder}" />
                             <Button Grid.Column="2" Classes="ghost" Content="↺"
-                                    ToolTip.Tip="Katalog neu laden"
+                                    ToolTip.Tip="{loc:Tr Catalog_RefreshTooltip}"
                                     Command="{Binding RefreshCatalogCommand}" />
                         </Grid>
 
@@ -258,16 +280,16 @@
 
                                             <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
                                                 <!-- GIANTS: In-App-Download -->
-                                                <Button Classes="accent" Content="📥 Herunterladen"
+                                                <Button Classes="accent" Content="{loc:Tr Catalog_Download}"
                                                         IsVisible="{Binding CanInAppDownload}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DownloadCommand}"
                                                         CommandParameter="{Binding}" />
                                                 <!-- Modhoster: nur Browser (Login-Pflicht, robots.txt sperrt Auto-Download) -->
-                                                <Button Classes="accent" Content="🌐 Öffnen"
+                                                <Button Classes="accent" Content="{loc:Tr Catalog_OpenInBrowser}"
                                                         IsVisible="{Binding NeedsBrowser}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenInBrowserCommand}"
                                                         CommandParameter="{Binding}" />
-                                                <Button Content="👁 Details"
+                                                <Button Content="{loc:Tr Catalog_Details}"
                                                         HorizontalAlignment="Right"
                                                         IsVisible="{Binding IsGiantsSource}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowDetailsCommand}"
@@ -283,17 +305,17 @@
             </TabItem>
 
             <!-- ==== Downloads (heruntergeladen, noch nicht installiert) ==== -->
-            <TabItem Header="⬇ Downloads">
+            <TabItem Header="{loc:Tr Tab_Downloads}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="14,10,14,6">
                             <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
                                        VerticalAlignment="Center"
-                                       Text="Fertig heruntergeladen, noch nicht installiert. Klick auf Installieren kopiert die ZIP in den LS25-Mod-Ordner." />
-                            <Button Grid.Column="1" Content="📁 Ordner"
+                                       Text="{loc:Tr Downloads_Info}" />
+                            <Button Grid.Column="1" Content="{loc:Tr Downloads_OpenFolder}"
                                     Command="{Binding OpenDownloadsFolderCommand}" Margin="8,0,0,0" />
                             <Button Grid.Column="2" Classes="ghost" Content="↺"
-                                    ToolTip.Tip="Downloads-Ordner neu einlesen"
+                                    ToolTip.Tip="{loc:Tr Downloads_RefreshTooltip}"
                                     Margin="4,0,0,0"
                                     Command="{Binding RefreshDownloadedCommand}" />
                         </Grid>
@@ -335,10 +357,10 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
-                                                <Button Classes="accent" Content="📥 Installieren"
+                                                <Button Classes="accent" Content="{loc:Tr Downloads_Install}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InstallDownloadCommand}"
                                                         CommandParameter="{Binding}" />
-                                                <Button Classes="danger" Content="🗑 Löschen"
+                                                <Button Classes="danger" Content="{loc:Tr Downloads_Delete}"
                                                         HorizontalAlignment="Right"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteDownloadCommand}"
                                                         CommandParameter="{Binding}" />

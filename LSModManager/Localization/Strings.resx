@@ -11,11 +11,108 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <!-- ============ Settings ============ -->
-  <data name="Settings_Section_UiLanguage" xml:space="preserve"><value>APPLICATION LANGUAGE</value></data>
-  <data name="Settings_UiLanguage_Hint" xml:space="preserve"><value>Changes are applied immediately — no restart needed.</value></data>
-
   <!-- ============ Common ============ -->
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+
+  <!-- ============ Window titles ============ -->
+  <data name="Window_Main" xml:space="preserve"><value>LS-ModManager</value></data>
+  <data name="Window_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Window_About" xml:space="preserve"><value>About LS-ModManager</value></data>
+  <data name="Window_ModDetail" xml:space="preserve"><value>Mod details</value></data>
+
+  <!-- ============ Main window ============ -->
+  <data name="Main_Subtitle" xml:space="preserve"><value>Install, manage and discover mods for Farming Simulator 25.</value></data>
+  <data name="Main_Section_Game" xml:space="preserve"><value>GAME</value></data>
+  <data name="Main_LaunchGame" xml:space="preserve"><value>🚜 Start LS25</value></data>
+  <data name="Main_CheckUpdates" xml:space="preserve"><value>🔄 Check for updates</value></data>
+  <data name="Main_Section_Installation" xml:space="preserve"><value>INSTALLATION</value></data>
+  <data name="Main_InstallZip" xml:space="preserve"><value>📦 Install ZIP…</value></data>
+  <data name="Main_Refresh" xml:space="preserve"><value>↺ Refresh</value></data>
+  <data name="Main_Section_System" xml:space="preserve"><value>SYSTEM</value></data>
+  <data name="Main_OpenModFolder" xml:space="preserve"><value>📁 Mod folder</value></data>
+  <data name="Main_OpenDownloadsFolder" xml:space="preserve"><value>⬇ Downloads folder</value></data>
+  <data name="Main_Settings" xml:space="preserve"><value>⚙ Settings</value></data>
+  <data name="Main_About" xml:space="preserve"><value>ⓘ About</value></data>
+  <!--
+    Suffix-Strategie für Zähler: XAML rendert die Zahl direkt aus dem Binding
+    und den Suffix aus dem lokalisierten Wrapper — dadurch bleibt Live-
+    Sprachwechsel automatisch funktional. Kein L.F-VM-Property nötig.
+  -->
+  <data name="Statusbar_InstalledCountSuffix" xml:space="preserve"><value>installed</value></data>
+
+  <!-- ============ Tabs ============ -->
+  <data name="Tab_Installed" xml:space="preserve"><value>📦 Installed</value></data>
+  <data name="Tab_Catalog" xml:space="preserve"><value>🌐 ModHub catalog</value></data>
+  <data name="Tab_Downloads" xml:space="preserve"><value>⬇ Downloads</value></data>
+
+  <!-- ============ Installed tab ============ -->
+  <data name="Installed_SearchPlaceholder" xml:space="preserve"><value>🔍  Filter installed mods (title, author, filename) …</value></data>
+  <data name="Installed_StatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="Installed_StatusDisabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Installed_BulkSelectedSuffix" xml:space="preserve"><value>selected:</value></data>
+  <data name="Installed_BulkEnable" xml:space="preserve"><value>⏻ Enable all</value></data>
+  <data name="Installed_BulkDisable" xml:space="preserve"><value>⏻ Disable all</value></data>
+  <data name="Installed_BulkUninstall" xml:space="preserve"><value>🗑 Uninstall all</value></data>
+  <data name="Installed_Multiplayer" xml:space="preserve"><value>🌐 Multiplayer</value></data>
+  <data name="Installed_InstallUpdate" xml:space="preserve"><value>⬇ Install update</value></data>
+  <data name="Installed_UpdateAvailablePrefix" xml:space="preserve"><value>⬆ Update: v</value></data>
+  <data name="Installed_ToggleEnabled" xml:space="preserve"><value>⏻ Enable/Disable</value></data>
+  <data name="Installed_Uninstall" xml:space="preserve"><value>🗑 Uninstall</value></data>
+
+  <!-- ============ Catalog tab ============ -->
+  <data name="Catalog_AllCategories" xml:space="preserve"><value>All categories</value></data>
+  <data name="Catalog_SearchPlaceholder" xml:space="preserve"><value>🔍  Search (title, author, category) …</value></data>
+  <data name="Catalog_RefreshTooltip" xml:space="preserve"><value>Reload catalog</value></data>
+  <data name="Catalog_Download" xml:space="preserve"><value>📥 Download</value></data>
+  <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Open</value></data>
+  <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
+
+  <!-- ============ Downloads tab ============ -->
+  <data name="Downloads_Info" xml:space="preserve"><value>Downloaded but not installed. Install copies the ZIP into your LS25 mod folder.</value></data>
+  <data name="Downloads_OpenFolder" xml:space="preserve"><value>📁 Folder</value></data>
+  <data name="Downloads_RefreshTooltip" xml:space="preserve"><value>Rescan downloads folder</value></data>
+  <data name="Downloads_Install" xml:space="preserve"><value>📥 Install</value></data>
+  <data name="Downloads_Delete" xml:space="preserve"><value>🗑 Delete</value></data>
+
+  <!-- ============ Settings window ============ -->
+  <data name="Settings_Subtitle" xml:space="preserve"><value>Configure mod folder and catalog language.</value></data>
+  <data name="Settings_Section_UiLanguage" xml:space="preserve"><value>APPLICATION LANGUAGE</value></data>
+  <data name="Settings_UiLanguage_Hint" xml:space="preserve"><value>Changes are applied immediately — no restart needed.</value></data>
+  <data name="Settings_Section_ModFolder" xml:space="preserve"><value>LS25 mod folder</value></data>
+  <data name="Settings_ModFolder_Description" xml:space="preserve"><value>The default path is auto-detected (Windows: Documents/My Games/FarmingSimulator2025/mods, Linux: Steam-Proton prefix). A manual path overrides the auto-detection.</value></data>
+  <data name="Settings_ModFolder_Detected" xml:space="preserve"><value>Detected</value></data>
+  <data name="Settings_ModFolder_ManualPath" xml:space="preserve"><value>Manual path (optional)</value></data>
+  <data name="Settings_ModFolder_ManualPathPlaceholder" xml:space="preserve"><value>Leave empty for auto-detection</value></data>
+  <data name="Settings_ModFolder_Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="Settings_ModFolder_Redetect" xml:space="preserve"><value>Re-detect</value></data>
+  <data name="Settings_Section_Catalog" xml:space="preserve"><value>ModHub catalog</value></data>
+  <data name="Settings_Catalog_Description" xml:space="preserve"><value>Language and cache behavior for the ModHub catalog.</value></data>
+  <data name="Settings_Catalog_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Catalog_AutoRefresh" xml:space="preserve"><value>Auto-refresh catalog cache</value></data>
+  <data name="Settings_Catalog_AutoRefreshHint" xml:space="preserve"><value>On startup the cache is reloaded if it is older than the configured age. „↺“ in the catalog tab always forces a manual refresh.</value></data>
+
+  <!-- ============ About window ============ -->
+  <data name="About_Description" xml:space="preserve"><value>Mod manager for Farming Simulator 25 (Windows / Linux).</value></data>
+  <data name="About_VersionPrefix" xml:space="preserve"><value>Version </value></data>
+  <data name="About_CheckUpdates" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="About_InstallUpdatePrefix" xml:space="preserve"><value>⬇ Install update v</value></data>
+  <data name="About_Checking" xml:space="preserve"><value>Checking …</value></data>
+  <data name="About_VersionAvailablePrefix" xml:space="preserve"><value>Version </value></data>
+  <data name="About_VersionAvailableSuffix" xml:space="preserve"><value> is available!</value></data>
+  <data name="About_NoAssetForPlatform" xml:space="preserve"><value> (no matching asset for this platform — download from GitHub)</value></data>
+  <data name="About_NoAccess" xml:space="preserve"><value>No connection to GitHub.</value></data>
+  <data name="About_UpToDate" xml:space="preserve"><value>You are on the latest version.</value></data>
+  <data name="About_CheckFailed" xml:space="preserve"><value>Update check failed.</value></data>
+  <data name="About_Downloading" xml:space="preserve"><value>Downloading update …</value></data>
+  <data name="About_DownloadingPrefix" xml:space="preserve"><value>Downloading update … </value></data>
+  <data name="About_InstallerRunning" xml:space="preserve"><value>Installer is running, app is closing …</value></data>
+  <data name="About_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
+  <data name="About_License" xml:space="preserve"><value>MIT License · © 2026 Lars Krügel (Kroste)</value></data>
+
+  <!-- ============ Mod detail window ============ -->
+  <data name="ModDetail_OpenInBrowser" xml:space="preserve"><value>🌐 Open in browser</value></data>
+  <data name="ModDetail_Download" xml:space="preserve"><value>📥 Download</value></data>
+  <data name="ModDetail_Screenshots" xml:space="preserve"><value>SCREENSHOTS</value></data>
+  <data name="ModDetail_Description" xml:space="preserve"><value>DESCRIPTION</value></data>
 </root>
