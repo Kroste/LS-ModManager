@@ -3,6 +3,7 @@
         xmlns:views="using:LSModManager.Views"
         xmlns:controls="using:LSModManager.Controls"
         xmlns:vm="using:LSModManager.ViewModels"
+        xmlns:loc="using:LSModManager.Localization"
         x:Class="LSModManager.Views.SettingsWindow"
         x:DataType="vm:SettingsWindowViewModel"
         Width="620" Height="440"
@@ -33,6 +34,26 @@
         <!-- Inhalt -->
         <ScrollViewer Padding="20,4,20,0">
             <StackPanel Spacing="14">
+
+                <!-- Language-Selector oben — der Nutzer soll die App-Sprache
+                     als Erstes sehen können, unabhängig davon in welcher
+                     Sprache die App gerade ist. -->
+                <Border Classes="card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{loc:Tr Settings_Section_UiLanguage}" Classes="section-label" />
+                        <ComboBox ItemsSource="{Binding UiCultures}"
+                                  SelectedItem="{Binding SelectedUiCulture}"
+                                  Width="260" HorizontalAlignment="Left">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayWithFlag}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{loc:Tr Settings_UiLanguage_Hint}"
+                                   Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
 
                 <Border Classes="card">
                     <StackPanel Spacing="8">

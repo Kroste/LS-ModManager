@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LSModManager.Localization;
 using LSModManager.Services;
 using NLog;
 
@@ -28,6 +29,27 @@ public sealed partial class SettingsWindowViewModel : ObservableObject
             ? stored!
             : "de";
         CatalogRefreshHours = _settings.Current.CatalogRefreshHours;
+
+        // UI-Sprache: aus Settings oder aktuelle Kultur, gemappt auf einen
+        // Supported-Cultures-Eintrag. Fallback auf Englisch.
+        var storedUi = _settings.Current.UiCulture ?? LocalizationService.Instance.CurrentIso;
+        SelectedUiCulture = UiCultures.FirstOrDefault(c => c.Iso == storedUi)
+                            ?? UiCultures.First(c => c.Iso == "en");
+    }
+
+    /// <summary>Verfügbare UI-Sprachen als DTO für die ComboBox (Flag + Name).</summary>
+    public IReadOnlyList<UiCultureOption> UiCultures { get; } =
+        LocalizationService.SupportedCultures
+            .Select(c => new UiCultureOption(c.Iso, c.Display, c.Flag))
+            .ToList();
+
+    [ObservableProperty] private UiCultureOption? _selectedUiCulture;
+
+    partial void OnSelectedUiCultureChanged(UiCultureOption? value)
+    {
+        // Live-Umschalten — der Nutzer sieht das Ergebnis sofort im offenen
+        // Fenster (und in allen anderen dank statisch gecachtem LocalizedString).
+        if (value is not null) LocalizationService.Instance.SetCulture(value.Iso);
     }
 
     public IReadOnlyList<string> SupportedLanguages => SupportedLanguagesList;
@@ -75,6 +97,7 @@ public sealed partial class SettingsWindowViewModel : ObservableObject
             s.ModPathOverride = string.IsNullOrWhiteSpace(ModPathOverride) ? null : ModPathOverride.Trim();
             s.CatalogLanguage = CatalogLanguage;
             s.CatalogRefreshHours = CatalogRefreshHours;
+            s.UiCulture = SelectedUiCulture?.Iso;
         });
         SettingsChanged?.Invoke(this, EventArgs.Empty);
         Log.Info("Settings gespeichert: override={o} lang={l}",
@@ -89,3 +112,10 @@ public sealed partial class SettingsWindowViewModel : ObservableObject
 
 /// <summary>Auswahl-Option für den Katalog-Cache-Refresh-Intervall.</summary>
 public sealed record CacheRefreshOption(int Hours, string Label);
+
+/// <summary>Auswahl-Option für die UI-Sprache im Settings-Fenster.</summary>
+public sealed record UiCultureOption(string Iso, string Display, string Flag)
+{
+    /// <summary>Für die ComboBox-Anzeige: „🇬🇧 English" / „🇩🇪 Deutsch".</summary>
+    public string DisplayWithFlag => $"{Flag}  {Display}";
+}
