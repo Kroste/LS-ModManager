@@ -119,14 +119,52 @@
   Kategorie, Version, Größe, Release, Rating, Beschreibung, Screenshots) und
   rendert alles in-App. „📥 Herunterladen"-Button delegiert an MainVM.
 - SettingsWindow: Mod-Pfad (Auto-Detect + manueller Override mit Folder-Picker)
-  + Katalog-Sprache (ComboBox).
+  + Katalog-Sprache (ComboBox) + **App-Sprache** (ComboBox mit Länderflaggen,
+  Live-Umschaltung).
 - AboutWindow: Version, GitHub-Link, BMC-Link, „Auf Updates prüfen"-Button.
   Bei verfügbarem Update + passendem Plattform-Asset erscheint zusätzlich
   „⬇ Update auf vX installieren" mit Progress-Bar; nach Klick lädt die App
   das Asset, startet den Installer und beendet sich selbst.
+- **L10N-Framework (DE + EN)**: `LocalizationService` als Singleton mit
+  `Strings.resx` (EN neutral) und `Strings.de.resx`, `LocalizedString`-
+  Wrapper (statischer Cache — Avalonia hält `Binding.Source` nicht dauerhaft
+  stark, sonst würde ein pro-Binding-Wrapper GC'd), `TrExtension` als XAML-
+  Markup-Extension (`{loc:Tr Key}`), `L.T`/`L.F`-Helper für Code-Behind
+  und ViewModels. Live-Sprachwechsel via `NotifyAllChanged` — feuert
+  `PropertyChanged(nameof(Value))` auf jedem gecachten Wrapper (WPF-Style
+  `Item[]` funktioniert in Avalonia 12 unzuverlässig, siehe
+  `LocalizationService.Current`-Doku). Zähler-Konstrukte („X installiert",
+  „⬆ Update: v8.2.0") sind als Prefix/Suffix-Split gebaut (zwei
+  TextBlocks + Zahl-Binding), damit Live-Wechsel ohne VM-Notify-Handler
+  funktioniert. Für computed VM-Properties (`ModPathStatusText`) abonniert
+  das MainWindowViewModel `LocalizationService.PropertyChanged` und
+  dispatcht ein `OnPropertyChanged` auf den UI-Thread. Kategorien-Sentinel
+  („Alle Kategorien") ist eine Factory-Method (nicht mehr static), damit
+  bei Sprachwechsel Position 0 der `Categories`-Collection frisch ersetzt
+  werden kann. Transiente `StatusText`-Meldungen bleiben in der Sprache,
+  in der sie gesetzt wurden — werden bei nächster User-Aktion überschrieben.
+  Neue Sprachen: `Strings.<iso>.resx` daneben legen und in
+  `LocalizationService.SupportedCultures` eintragen (mit Flaggen-Emoji).
+- **Backup/Restore der Mod-Konfiguration**: `ModBackupService.CreateBackupAsync`
+  erzeugt ein selbstenthaltenes ZIP mit `manifest.json` (Format-Version 1,
+  Enabled-States + Metadata pro Mod) und `mods/`-Unterordner (alle ZIPs,
+  auch deaktivierte). Atomic write via tmp+move. `RestoreBackupAsync` liest
+  das Manifest (lehnt unbekannte Format-Versionen ab, statt still Datenverlust
+  zu riskieren), extrahiert jeden Mod in Temp und ruft `ModInstallService.Install`
+  + `SetEnabled` je nach Manifest-State. **Wichtig:** beim Extract wird ein
+  `.zip.disabled`-Filename auf `.zip` normalisiert — `Install` nutzt Filename
+  1:1 und `SetEnabled(false)` hängt danach `.disabled` an; sonst landet
+  `X.zip.disabled` als `X.zip.disabled.disabled`. UI: Buttons in der System-
+  Toolbar (`💾 Backup` mit Save-Dialog, `📂 Restore` mit Open-Dialog), Progress
+  in Statusbar.
 - Tests: xunit.v3 — `ModDescReaderTests` (ZIP-Parsing, Sprach-Fallback,
   Preview-Extraktion), `ModHubServiceTests` (URL-Builder, HTML-Parser),
-  `ModPathServiceTests` (Plattform-Kandidaten).
+  `ModPathServiceTests` (Plattform-Kandidaten), `ModBackupServiceTests`
+  (Round-Trip Backup→leerräumen→Restore, Manifest-Inhalt, Ablehnung
+  unbekannter Format-Version, InvalidOp bei leerem Ordner). Tests die
+  `XDG_CONFIG_HOME` manipulieren müssen (Prozess-globale Variable!)
+  brauchen `[Collection("EnvironmentIsolation")]` für sequentielle
+  Ausführung — sonst race mit `AppSettingsBrokenBackupTests`.
 
 ## Roadmap
 
@@ -135,18 +173,25 @@
     Installed-Suche, .broken-Backup, Bulk-Aktionen)_
 
 - **Mittelfristig:**
-  - **Backup/Restore der Mod-Konfiguration** (ZIP mit aktiven Mods + Meta).
+  - _(Backup/Restore + L10N-Framework erledigt)_
+
 - **Groß (mehrere Runden):**
-  - **Multi-Profile** (Karriere-abhängige Mod-Sets).
   - **DDS-Decoder** für Icons (BC1/BC3, evtl. mit Pfim-NuGet), damit Mods ohne
     PNG-Icon trotzdem eine Preview haben (aktuell kompensiert der ModHub-
     Cover-Backfill das für alle im Katalog gelisteten Mods).
   - **KI-Features** nach Allpaca-Muster (Multi-Provider, Ollama-Default):
     Beschreibungs-Zusammenfassung, Empfehlungssystem („Ähnliche Mods wie X").
+
 - **Bekannt-aber-vertagt:**
   - `searchMod`-Parameter der Website — funktioniert nachgewiesen, wird aktuell
-    nicht genutzt weil unser voller Katalog-Cache (~4800 Mods) schon alles
+    nicht genutzt weil unser voller Katalog-Cache (~11000 Mods) schon alles
     findet. Bei Bedarf als „Live-Suche"-Button einbaubar.
+  - **Multi-Profile** (Karriere-abhängige Mod-Sets): gestrichen — LS25 hat
+    kein natives Profil-Konzept, Mods sind global. Der eigentliche Use-Case
+    („mehrere Mod-Sets je Karriere") ist bereits mit Backup/Restore abgedeckt
+    (ein Backup-ZIP pro Karriere, Restore vor Spielstart). In-App-Umschaltung
+    wäre nur Kosmetik über einen Dropdown statt File-Dialog — Aufwand vs.
+    Nutzen passt nicht.
 
 ## Referenz
 
