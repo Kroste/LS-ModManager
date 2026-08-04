@@ -63,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<ModDescReader>();
         services.AddSingleton<ModInstallService>();
         services.AddSingleton<ModHubService>();
+        services.AddSingleton<ModhosterCatalogService>();
         services.AddSingleton<UpdateService>();
 
         // ViewModels (transient — jedes Fenster bekommt seins)

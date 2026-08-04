@@ -16,4 +16,13 @@ public sealed class ModHubItemViewModel : ObservableObject
     public string DetailUrl => Model.DetailUrl;
     public string? Version => Model.Version;
     public string? SizeText => Model.SizeText;
+
+    /// <summary>„GIANTS" oder „Modhoster" — für das Source-Badge in der Card.</summary>
+    public string SourceLabel => Model.Source == ModHubEntry.ModhosterSource ? "Modhoster" : "GIANTS";
+    public bool IsGiantsSource => Model.Source == ModHubEntry.GiantsSource;
+    public bool IsModhosterSource => Model.Source == ModHubEntry.ModhosterSource;
+
+    /// <summary>Nur GIANTS erlaubt In-App-Download; Modhoster braucht Browser.</summary>
+    public bool CanInAppDownload => Model.CanInAppDownload;
+    public bool NeedsBrowser => !Model.CanInAppDownload;
 }

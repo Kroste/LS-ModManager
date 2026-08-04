@@ -53,6 +53,15 @@
     `Referer`-Header setzen** — GIANTS-CDN blockt sonst mit HTTP 403 (auch für
     Preview-Bilder!). Der `UrlImageBehavior` und der `_http` im Service haben
     beide `Referer: https://www.farming-simulator.com/` als Default.
+  - `ModhosterCatalogService`: zweite Katalog-Quelle über die offene JSON-API
+    `modhoster.de/mods.json?game_id=1` (game_id=1 ist bei modhoster LS25).
+    24 Mods pro Seite, sequenzielles Paging mit 300 ms Delay. Kein In-App-
+    Download (Modhoster braucht Login-Session, robots.txt sperrt `/external/`
+    und `/redirect/`) — `ModHubEntry.CanInAppDownload=false`, UI zeigt statt
+    „📥 Herunterladen" nur „🌐 Öffnen" und einen Source-Badge „Modhoster".
+    Beide Quellen laufen im MainVM parallel als Background-Full-Load und
+    mischen sich in `_allCatalog` (Dedup per DetailUrl); der persistente
+    JSON-Cache enthält beide gemeinsam.
   - `UpdateService`: GitHub-Releases-API-Check + **echtes Self-Update**.
     Plattform-Detection (Win-ZIP, Linux-AppImage, Linux-tar.gz), Asset-Wahl
     aus dem Release-JSON, Download mit Progress in

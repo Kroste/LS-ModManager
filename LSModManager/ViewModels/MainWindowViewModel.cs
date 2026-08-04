@@ -21,6 +21,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ModInstallService _install;
     private readonly ModPathService _paths;
     private readonly ModHubService _hub;
+    private readonly ModhosterCatalogService _modhoster;
     private readonly AppSettingsService _settings;
     private readonly UpdateService _updates;
 
@@ -37,12 +38,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ModInstallService install,
         ModPathService paths,
         ModHubService hub,
+        ModhosterCatalogService modhoster,
         AppSettingsService settings,
         UpdateService updates)
     {
         _install = install;
         _paths = paths;
         _hub = hub;
+        _modhoster = modhoster;
         _settings = settings;
         _updates = updates;
 
@@ -798,8 +801,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
             }
 
             StatusText = $"Katalog: {_allCatalog.Count} Einträge (Seite 1), Rest wird nachgeladen …";
-            // Fire-and-forget: der Rest der Seiten läuft im Hintergrund weiter.
+            // Beide Katalog-Quellen parallel im Hintergrund — GIANTS ist langsamer
+            // (~1-2 min), Modhoster ist über JSON-API deutlich schneller und
+            // wird so bereits nach wenigen Sekunden sichtbar.
             _ = LoadAllRemainingPagesAsync(_fullLoadCts.Token);
+            _ = LoadModhosterCatalogAsync(_fullLoadCts.Token);
         }
         catch (Exception ex)
         {
@@ -879,9 +885,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 lock (_catalogLock) { finalTotal = _allCatalog.Count; finalPage = _lastLoadedPage; }
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    StatusText = $"Katalog vollständig: {finalTotal} Einträge auf {finalPage} Seiten.";
+                    StatusText = $"GIANTS-Katalog vollständig: {finalTotal} Einträge auf {finalPage} Seiten.";
                 });
-                Log.Info("Katalog-Full-Load fertig: {n} Einträge, {p} Seiten", finalTotal, finalPage);
+                Log.Info("GIANTS-Katalog-Full-Load fertig: {n} Einträge, {p} Seiten", finalTotal, finalPage);
             }
         }
         catch (OperationCanceledException)
@@ -898,6 +904,65 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // besser einen Teilcache als beim nächsten Start alles neu laden.
             SaveCatalogSnapshot(lang);
         }
+    }
+
+    /// <summary>
+    /// Lädt sequenziell alle Modhoster-Katalog-Seiten (game_id=1 = LS25) und
+    /// mischt die Einträge in <see cref="_allCatalog"/>. Modhoster-Einträge
+    /// haben <c>CanInAppDownload=false</c> — die UI zeigt nur „🌐 Öffnen".
+    /// </summary>
+    private async Task LoadModhosterCatalogAsync(CancellationToken ct)
+    {
+        try
+        {
+            const int maxPages = 500; // Sicherheitsgrenze; API liefert ab ~200 leer
+            int page = 1;
+            var totalAdded = 0;
+            while (!ct.IsCancellationRequested && page <= maxPages)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(300), ct).ConfigureAwait(false);
+                var entries = await _modhoster.FetchCatalogPageAsync(page, ct).ConfigureAwait(false);
+                if (entries.Count == 0) break;
+
+                var newlyAdded = new List<ModHubEntry>();
+                int total;
+                lock (_catalogLock)
+                {
+                    var existingUrls = new HashSet<string>(_allCatalog.Select(e => e.DetailUrl));
+                    foreach (var e in entries)
+                    {
+                        if (existingUrls.Add(e.DetailUrl))
+                        {
+                            _allCatalog.Add(e);
+                            newlyAdded.Add(e);
+                        }
+                    }
+                    totalAdded += newlyAdded.Count;
+                    total = _allCatalog.Count;
+                }
+
+                var currentPage = page;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    AppendToCatalogView(newlyAdded);
+                    StatusText = $"Katalog: {total} (Modhoster-Seite {currentPage}) …";
+                });
+
+                if (currentPage % 10 == 0)
+                    SaveCatalogSnapshot(_settings.Current.CatalogLanguage ?? "de");
+                page++;
+            }
+
+            int finalTotal;
+            lock (_catalogLock) finalTotal = _allCatalog.Count;
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                StatusText = $"Katalog vollständig: {finalTotal} Einträge (GIANTS + Modhoster).";
+            });
+            Log.Info("Modhoster-Full-Load fertig: +{n} neue, {t} gesamt", totalAdded, finalTotal);
+        }
+        catch (OperationCanceledException) { /* ok */ }
+        catch (Exception ex) { Log.Warn(ex, "Modhoster-Full-Load Fehler"); }
     }
 
     private void SaveCatalogSnapshot(string language)
@@ -947,7 +1012,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public void ShowDetails(ModHubItemViewModel? item)
     {
         if (item is null) return;
+        // Modhoster hat keine eigene Detail-API — direkt im Browser öffnen.
+        if (item.NeedsBrowser) { OpenInBrowser(item); return; }
         DetailRequested?.Invoke(item);
+    }
+
+    /// <summary>Öffnet die Katalog-Detail-URL im System-Browser.</summary>
+    [RelayCommand]
+    public void OpenInBrowser(ModHubItemViewModel? item)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(item.DetailUrl)) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo(item.DetailUrl) { UseShellExecute = true });
+            StatusText = $"Browser geöffnet: {item.Title}";
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Konnte Browser nicht öffnen");
+            StatusText = $"Fehler: {ex.Message}";
+        }
     }
 
     /// <summary>

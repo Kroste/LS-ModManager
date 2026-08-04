@@ -238,7 +238,16 @@
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
-                                                <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                    <Border Background="{DynamicResource KrosteAccentSoftBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsModhosterSource}">
+                                                        <TextBlock Text="Modhoster" FontSize="10"
+                                                                   Foreground="{DynamicResource KrosteSecondaryTextBrush}" />
+                                                    </Border>
+                                                </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{Binding Author}" Classes="muted" />
                                                     <TextBlock Text="·" Classes="muted"
@@ -248,11 +257,19 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                                <!-- GIANTS: In-App-Download -->
                                                 <Button Classes="accent" Content="📥 Herunterladen"
+                                                        IsVisible="{Binding CanInAppDownload}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DownloadCommand}"
+                                                        CommandParameter="{Binding}" />
+                                                <!-- Modhoster: nur Browser (Login-Pflicht, robots.txt sperrt Auto-Download) -->
+                                                <Button Classes="accent" Content="🌐 Öffnen"
+                                                        IsVisible="{Binding NeedsBrowser}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenInBrowserCommand}"
                                                         CommandParameter="{Binding}" />
                                                 <Button Content="👁 Details"
                                                         HorizontalAlignment="Right"
+                                                        IsVisible="{Binding IsGiantsSource}"
                                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowDetailsCommand}"
                                                         CommandParameter="{Binding}" />
                                             </StackPanel>
