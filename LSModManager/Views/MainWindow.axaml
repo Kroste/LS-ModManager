@@ -393,15 +393,26 @@
             <TabItem Header="{loc:Tr Tab_Downloads}">
                 <Border Classes="card-flat" Padding="0">
                     <DockPanel>
-                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="14,10,14,6">
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto"
+                              Margin="14,10,14,6" ColumnSpacing="6">
                             <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
                                        VerticalAlignment="Center"
                                        Text="{loc:Tr Downloads_Info}" />
-                            <Button Grid.Column="1" Content="{loc:Tr Downloads_OpenFolder}"
-                                    Command="{Binding OpenDownloadsFolderCommand}" Margin="8,0,0,0" />
-                            <Button Grid.Column="2" Classes="ghost" Content="↺"
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                       Classes="secondary" Text="{loc:Tr Installed_SortLabel}" />
+                            <ComboBox Grid.Column="2" Width="180"
+                                      ItemsSource="{Binding DownloadedSortOptions}"
+                                      SelectedItem="{Binding SelectedDownloadedSortOption}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding LabelWrapper.Value}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="3" Content="{loc:Tr Downloads_OpenFolder}"
+                                    Command="{Binding OpenDownloadsFolderCommand}" />
+                            <Button Grid.Column="4" Classes="ghost" Content="↺"
                                     ToolTip.Tip="{loc:Tr Downloads_RefreshTooltip}"
-                                    Margin="4,0,0,0"
                                     Command="{Binding RefreshDownloadedCommand}" />
                         </Grid>
 

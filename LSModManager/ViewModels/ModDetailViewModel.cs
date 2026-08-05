@@ -29,7 +29,17 @@ public sealed partial class ModDetailViewModel : ObservableObject
     private readonly AiSettingsService _aiSettings;
     private readonly AiProviderFactory _aiFactory;
     private readonly MainWindowViewModel _main;
-    private readonly int _modId;
+
+    /// <summary>Aktuell angezeigter Mod. Wird von <see cref="NavigateToAsync"/>
+    /// bei „Details"-Klick auf einer Empfehlungscard umgesetzt — der User
+    /// bleibt im selben Fenster und kann mit „← Zurück" navigieren, statt
+    /// dass sich Fenster stapeln.</summary>
+    private int _modId;
+
+    /// <summary>Navigations-History für den Zurück-Button. Push beim Vorwärts-
+    /// Navigieren (Similar-Details-Klick), Pop beim Zurück. Nicht persistent
+    /// — nur für die aktuelle Fenster-Session.</summary>
+    private readonly Stack<(int ModId, string Title)> _history = new();
 
     public ModDetailViewModel(
         ModHubService hub, AppSettingsService settings,
@@ -45,6 +55,10 @@ public sealed partial class ModDetailViewModel : ObservableObject
         Title = initialTitle;
         _description = L.T("ModDetail_Loading");
     }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(GoBackCommand))]
+    private bool _canGoBack;
 
     [ObservableProperty] private string _title = "";
     [ObservableProperty] private string _author = "";
@@ -80,7 +94,16 @@ public sealed partial class ModDetailViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SummarizeCommand))]
+    [NotifyPropertyChangedFor(nameof(SummarizeButtonText))]
     private bool _isSummarizing;
+
+    /// <summary>Text am Zusammenfassen-Button. Wechselt zu „Fasse zusammen …"
+    /// während der Anfrage — visueller Hinweis dass etwas passiert (das
+    /// StatusText-Feld ist als Feedback allein zu leise, weil unten außer
+    /// Sichtweite wenn der User in die Beschreibung scrollt).</summary>
+    public string SummarizeButtonText => IsSummarizing
+        ? L.T("ModDetail_AiSummarizing")
+        : L.T("ModDetail_AiSummarize");
 
     [ObservableProperty] private string _summaryText = "";
     public bool HasSummary => !string.IsNullOrWhiteSpace(SummaryText);
@@ -88,7 +111,13 @@ public sealed partial class ModDetailViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(FindSimilarModsCommand))]
+    [NotifyPropertyChangedFor(nameof(FindSimilarButtonText))]
     private bool _isSearchingSimilar;
+
+    /// <summary>Text am Ähnliche-Mods-Button — analog Zusammenfassen.</summary>
+    public string FindSimilarButtonText => IsSearchingSimilar
+        ? L.T("ModDetail_AiSimilarLoading")
+        : L.T("ModDetail_AiSimilarLoad");
 
     /// <summary>Von der KI vorgeschlagene ähnliche Mods (aus dem Katalog zurück-
     /// gemappt). Card-Klick öffnet den Browser (Detail-Fenster-Kette wäre unnötige
@@ -130,6 +159,11 @@ public sealed partial class ModDetailViewModel : ObservableObject
             foreach (var url in detail.ScreenshotUrls) ScreenshotUrls.Add(url);
             DetailUrl = detail.DetailUrl;
             DownloadReady = !string.IsNullOrWhiteSpace(detail.DownloadUrl);
+
+            // Vorherige KI-Zusammenfassung aus dem Cache — dann sieht der User
+            // sofort was er letztes Mal generiert hat, ohne Neu-Anfrage.
+            var cached = AiSummaryCache.Read(_modId);
+            if (!string.IsNullOrWhiteSpace(cached)) SummaryText = cached;
         }
         catch (Exception ex)
         {
@@ -188,8 +222,9 @@ public sealed partial class ModDetailViewModel : ObservableObject
                 AiPromptBuilder.SummarizeSystemPrompt,
                 AiPromptBuilder.BuildSummarizeUserPrompt(Title, Description));
             SummaryText = response;
+            AiSummaryCache.Write(_modId, response);
             StatusText = "";
-            Log.Info("KI-Zusammenfassung erstellt für {t}: {len} Zeichen", Title, response.Length);
+            Log.Info("KI-Zusammenfassung erstellt für {t}: {len} Zeichen (gecacht)", Title, response.Length);
         }
         catch (Exception ex)
         {
@@ -272,17 +307,59 @@ public sealed partial class ModDetailViewModel : ObservableObject
             _main.DownloadCommand.Execute(item);
     }
 
-    /// <summary>Details-Klick auf eine Empfehlungscard — öffnet ein NEUES
-    /// Detail-Fenster für den empfohlenen Mod. Der User hat dann ein Stack:
-    /// aktuelles Detail + neues Empfehlungs-Detail. Kann jedes einzeln
-    /// schließen. Delegiert an das MainVM, damit das Fenster mit denselben
-    /// DI-Services aufgebaut wird wie ein Katalog-Doppelklick.</summary>
+    /// <summary>Details-Klick auf eine Empfehlungscard — ersetzt den State im
+    /// AKTUELLEN Fenster mit dem empfohlenen Mod und pushed den vorherigen
+    /// Zustand in die History (für den „← Zurück"-Button). Bewusst kein neues
+    /// Fenster: sonst würde der User bei mehrfachem Weiterklicken einen
+    /// Fenster-Stack aufbauen.</summary>
     [RelayCommand]
-    public void ShowSimilarDetails(ModHubItemViewModel? item)
+    public async Task ShowSimilarDetailsAsync(ModHubItemViewModel? item)
     {
         if (item is null) return;
-        if (_main.ShowDetailsCommand.CanExecute(item))
-            _main.ShowDetailsCommand.Execute(item);
+        item.MarkAsSeen();
+        var newModId = MainWindowViewModel.ExtractModIdFromUrl(item.DetailUrl);
+        if (newModId is null) return;
+        await NavigateToAsync(newModId.Value, item.Title);
+    }
+
+    /// <summary>Pushed den aktuellen Mod in die History und lädt den neuen.
+    /// Vom „👁 Details" auf Empfehlungscards aufgerufen.</summary>
+    private async Task NavigateToAsync(int modId, string title)
+    {
+        _history.Push((_modId, Title));
+        CanGoBack = true;
+        await LoadModAsync(modId, title);
+    }
+
+    /// <summary>„← Zurück"-Command — pop History, lade den vorherigen Mod.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoBack))]
+    public async Task GoBackAsync()
+    {
+        if (_history.Count == 0) return;
+        var (prevId, prevTitle) = _history.Pop();
+        CanGoBack = _history.Count > 0;
+        await LoadModAsync(prevId, prevTitle);
+    }
+
+    /// <summary>Zentrale State-Reset-Methode: neuen Mod ID setzen, alle
+    /// Detail-Felder + KI-Ergebnisse leeren, dann InitializeAsync für den
+    /// neuen Mod laufen lassen. Von <see cref="NavigateToAsync"/> und
+    /// <see cref="GoBackAsync"/> verwendet.</summary>
+    private async Task LoadModAsync(int modId, string title)
+    {
+        _modId = modId;
+        Title = title;
+        // KI-Cards zurücksetzen — die gehören zum vorherigen Mod, nicht zum neuen.
+        SummaryText = "";
+        SimilarMods.Clear();
+        SimilarNoResults = false;
+        OnPropertyChanged(nameof(HasSimilarResults));
+        // Screenshot- und Statustexte reset — sonst blitzt kurz der alte
+        // Content durch bevor InitializeAsync die neuen Werte setzt.
+        ScreenshotUrls.Clear();
+        StatusText = "";
+        Description = L.T("ModDetail_Loading");
+        await InitializeAsync();
     }
 
     /// <summary>Öffnet die empfohlene Mod-Seite im System-Browser — Fallback

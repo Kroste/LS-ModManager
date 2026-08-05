@@ -66,6 +66,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _statusText = L.T("Status_Ready");
         _selectedSortOption = SortOptions[0]; // Installed: Default nach Name
         _selectedCatalogSortOption = CatalogSortOptions[0]; // Katalog: Default = Ladereihenfolge
+        _selectedDownloadedSortOption = DownloadedSortOptions[2]; // Downloads: Default nach Datum (neueste zuerst)
         _lastCatalogLanguage = _settings.Current.CatalogLanguage ?? "de";
 
         // Sprachwechsel im laufenden Betrieb: ModPathStatusText und CurrentVersionText
@@ -184,6 +185,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Rohliste aller installierten Mods (unfiltered). Wird für die Suche
     /// verwendet; <see cref="InstalledMods"/> ist die gefilterte Sicht.</summary>
     private readonly List<InstalledModItemViewModel> _allInstalled = new();
+
+    /// <summary>Rohliste aller Downloads — nötig für die Sortier-Umstellung ohne
+    /// erneutes Disk-Lesen. <see cref="DownloadedMods"/> ist die sortierte Sicht.</summary>
+    private readonly List<InstalledModItemViewModel> _allDownloaded = new();
 
     public ObservableCollection<InstalledModItemViewModel> InstalledMods { get; } = new();
     public ObservableCollection<InstalledModItemViewModel> DownloadedMods { get; } = new();
@@ -845,15 +850,41 @@ public sealed partial class MainWindowViewModel : ObservableObject
         try
         {
             var list = await Task.Run(() => _install.ListDownloaded());
-            DownloadedMods.Clear();
-            foreach (var m in list) DownloadedMods.Add(new InstalledModItemViewModel(m));
-            Log.Info("Downloads aktualisiert: {n}", DownloadedMods.Count);
-            _ = BackfillCoversAsync(DownloadedMods, isInstalled: false);
+            _allDownloaded.Clear();
+            foreach (var m in list) _allDownloaded.Add(new InstalledModItemViewModel(m));
+            RebuildDownloadedView();
+            Log.Info("Downloads aktualisiert: {n}", _allDownloaded.Count);
+            _ = BackfillCoversAsync(_allDownloaded, isInstalled: false);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Refresh Downloads fehlgeschlagen");
         }
+    }
+
+    /// <summary>Sortier-Optionen für den Downloads-Tab (analog Installed —
+    /// Name, Größe, Datum). Status-Sort fehlt bewusst: Downloads sind immer
+    /// „bereit", keine aktiv/deaktiv-Achse.</summary>
+    public IReadOnlyList<InstalledSortOption> DownloadedSortOptions { get; } = new[]
+    {
+        new InstalledSortOption(InstalledSortKey.Name, LocalizedString.Get("Installed_Sort_Name")),
+        new InstalledSortOption(InstalledSortKey.Size, LocalizedString.Get("Installed_Sort_Size")),
+        new InstalledSortOption(InstalledSortKey.Date, LocalizedString.Get("Installed_Sort_Date")),
+    };
+
+    [ObservableProperty]
+    private InstalledSortOption? _selectedDownloadedSortOption;
+
+    partial void OnSelectedDownloadedSortOptionChanged(InstalledSortOption? value) =>
+        RebuildDownloadedView();
+
+    private void RebuildDownloadedView()
+    {
+        var key = SelectedDownloadedSortOption?.Key ?? InstalledSortKey.Date;
+        DownloadedMods.Clear();
+        // Wir wiederverwenden SortInstalled — dieselbe Sortier-Semantik greift.
+        foreach (var m in SortInstalled(_allDownloaded, key))
+            DownloadedMods.Add(m);
     }
 
     /// <summary>
@@ -1392,6 +1423,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public void ShowDetails(ModHubItemViewModel? item)
     {
         if (item is null) return;
+        item.MarkAsSeen();
         // Modhoster hat keine eigene Detail-API — direkt im Browser öffnen.
         if (item.NeedsBrowser) { OpenInBrowser(item); return; }
         DetailRequested?.Invoke(item);
@@ -1402,6 +1434,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public void OpenInBrowser(ModHubItemViewModel? item)
     {
         if (item is null || string.IsNullOrWhiteSpace(item.DetailUrl)) return;
+        item.MarkAsSeen();
         try
         {
             Process.Start(new ProcessStartInfo(item.DetailUrl) { UseShellExecute = true });
@@ -1423,6 +1456,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         var target = item ?? SelectedCatalog;
         if (target is null) return;
+        target.MarkAsSeen();
         var modId = ExtractModIdFromUrl(target.DetailUrl);
         if (modId is null)
         {
@@ -1457,7 +1491,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool NotBusy() => !IsBusy;
 
-    private static int? ExtractModIdFromUrl(string url)
+    public static int? ExtractModIdFromUrl(string url)
     {
         var m = Regex.Match(url, @"mod_id=(\d+)");
         return m.Success && int.TryParse(m.Groups[1].Value, out var id) ? id : null;

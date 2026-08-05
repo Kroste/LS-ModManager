@@ -209,4 +209,5 @@
   <data name="ModDetail_AiSimilarLoading" xml:space="preserve"><value>Suche ähnliche Mods …</value></data>
   <data name="ModDetail_AiSimilarNone" xml:space="preserve"><value>Keine passenden Mods gefunden.</value></data>
   <data name="ModDetail_AiError" xml:space="preserve"><value>KI-Fehler: {0}</value></data>
+  <data name="ModDetail_GoBack" xml:space="preserve"><value>← Zurück</value></data>
 </root>

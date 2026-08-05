@@ -240,4 +240,5 @@
   <data name="ModDetail_AiSimilarLoading" xml:space="preserve"><value>Searching for similar mods …</value></data>
   <data name="ModDetail_AiSimilarNone" xml:space="preserve"><value>No matches found.</value></data>
   <data name="ModDetail_AiError" xml:space="preserve"><value>AI error: {0}</value></data>
+  <data name="ModDetail_GoBack" xml:space="preserve"><value>← Back</value></data>
 </root>

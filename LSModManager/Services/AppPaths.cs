@@ -23,6 +23,19 @@ public static class AppPaths
         }
     }
 
+    /// <summary>Persistenter Cache für KI-generierte Mod-Zusammenfassungen.
+    /// Eine Datei pro <c>modId</c>, damit dieselbe Zusammenfassung nicht bei
+    /// jedem Detail-Öffnen neu Tokens kostet.</summary>
+    public static string AiSummariesCacheDir
+    {
+        get
+        {
+            var dir = Path.Combine(CacheRoot, "ai-summaries");
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+    }
+
     /// <summary>Cache für Preview-PNGs aus installierten Mods.</summary>
     public static string PreviewsCacheDir
     {

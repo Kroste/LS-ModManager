@@ -4,20 +4,30 @@ using LSModManager.Models;
 namespace LSModManager.ViewModels;
 
 /// <summary>UI-Adapter für einen ModHub-Katalog-Eintrag. Preview wird lazy per Bindung geladen.</summary>
-public sealed class ModHubItemViewModel : ObservableObject
+public sealed partial class ModHubItemViewModel : ObservableObject
 {
     public ModHubItemViewModel(ModHubEntry entry, bool isNew = false)
     {
         Model = entry;
-        IsNew = isNew;
+        _isNew = isNew;
     }
 
     public ModHubEntry Model { get; }
 
     /// <summary>True wenn dieser Eintrag beim vorherigen App-Start noch nicht im
     /// Katalog war (Diff über CatalogCache.LoadSeenSnapshot). Steuert das
-    /// „NEU"-Badge auf der Card.</summary>
-    public bool IsNew { get; }
+    /// „NEU"-Badge auf der Card. Wird auf false gesetzt sobald der Nutzer den
+    /// Mod ansieht (Details öffnen, Download starten, Browser öffnen) — der
+    /// Badge ist damit „gesehen"-getrieben, nicht nur zeitbasiert.</summary>
+    [ObservableProperty] private bool _isNew;
+
+    /// <summary>Vom MainVM aufgerufen sobald der User den Mod interagiert
+    /// (Details/Download/Browser). No-op wenn schon nicht mehr neu.</summary>
+    public void MarkAsSeen()
+    {
+        if (IsNew) IsNew = false;
+    }
+
     public string Title => Model.Title;
     public string Author => Model.Author;
     public string Category => Model.Category;

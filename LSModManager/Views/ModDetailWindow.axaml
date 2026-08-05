@@ -60,16 +60,20 @@
                     </StackPanel>
                 </Border>
 
-                <!-- KI-Toolbar direkt unter dem Header, damit die Buttons sofort
-                     sichtbar sind (die Beschreibung darunter kann bei Community-
-                     Mods sehr lang sein und die Ergebnis-Cards unten außer Sicht
-                     drücken). Card verschwindet komplett wenn kein KI-Provider
-                     konfiguriert ist. -->
+                <!-- KI-Toolbar direkt unter dem Header. Button-Text wechselt
+                     bei laufender Anfrage zu „Fasse zusammen …" bzw. „Suche
+                     ähnliche Mods …"; parallel disable per CanExecute.
+                     „← Zurück" nur sichtbar wenn der User schon durch
+                     Empfehlungscards navigiert ist (History nicht leer). -->
                 <Border Classes="card" IsVisible="{Binding IsAiEnabled}" Padding="12,10">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button Content="{loc:Tr ModDetail_AiSummarize}"
+                        <Button Content="{loc:Tr ModDetail_GoBack}"
+                                Classes="ghost"
+                                Command="{Binding GoBackCommand}"
+                                IsVisible="{Binding CanGoBack}" />
+                        <Button Content="{Binding SummarizeButtonText}"
                                 Command="{Binding SummarizeCommand}" />
-                        <Button Content="{loc:Tr ModDetail_AiSimilarLoad}"
+                        <Button Content="{Binding FindSimilarButtonText}"
                                 Command="{Binding FindSimilarModsCommand}" />
                     </StackPanel>
                 </Border>
