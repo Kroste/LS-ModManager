@@ -1354,25 +1354,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>Sortiert den Katalog nach dem gewählten Key. Featured-Mods
-    /// werden IMMER nach oben priorisiert (unabhängig vom Sort-Key) — der
-    /// User hat sich für Empfehlungs-Highlighting entschieden, die dürfen
-    /// nicht vom Namens-Sort ans Ende gedrückt werden.</summary>
+    /// werden NICHT bevorzugt — bei GIANTS gibt es pro Katalog-Seite einen
+    /// Featured-Slot, das ergibt ~200 Featured-Mods bei ~200 Seiten und würde
+    /// die normale Sortierung komplett überlagern. Das Featured-Highlighting
+    /// passiert stattdessen nur visuell über das ⭐-Badge auf der Card.</summary>
     private static IEnumerable<ModHubEntry> SortCatalog(
-        IEnumerable<ModHubEntry> source, CatalogSortKey key)
+        IEnumerable<ModHubEntry> source, CatalogSortKey key) => key switch
     {
-        // OrderByDescending(IsFeatured) → Featured=true (=1) vor false (=0).
-        // Danach die eigentliche Sortier-Achse als Sekundär-Kriterium.
-        var featuredFirst = source.OrderByDescending(e => e.IsFeatured);
-        return key switch
-        {
-            CatalogSortKey.Name     => featuredFirst.ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-            CatalogSortKey.Author   => featuredFirst.ThenBy(e => e.Author, StringComparer.OrdinalIgnoreCase)
-                                                     .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-            CatalogSortKey.Category => featuredFirst.ThenBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
-                                                     .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-            _                       => featuredFirst, // Default: Featured oben, dann Ladereihenfolge
-        };
-    }
+        CatalogSortKey.Name     => source.OrderBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        CatalogSortKey.Author   => source.OrderBy(e => e.Author, StringComparer.OrdinalIgnoreCase)
+                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        CatalogSortKey.Category => source.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
+                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+        _                       => source, // Default: Ladereihenfolge unverändert
+    };
 
     /// <summary>True wenn der Eintrag beim vorherigen App-Start noch nicht im
     /// Katalog war (Diff gegen <see cref="_previousSeenUrls"/>). Beim Erst-Start
