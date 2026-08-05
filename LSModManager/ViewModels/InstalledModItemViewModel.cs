@@ -14,14 +14,23 @@ public sealed partial class InstalledModItemViewModel : ObservableObject
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    public InstalledModItemViewModel(InstalledMod mod)
+    public InstalledModItemViewModel(InstalledMod mod, bool isAlreadyInstalled = false)
     {
         Model = mod;
         Preview = LoadPreview(mod.PreviewImagePath);
+        _isAlreadyInstalled = isAlreadyInstalled;
     }
 
     public InstalledMod Model { get; }
     public Bitmap? Preview { get; }
+
+    /// <summary>True wenn dieses Downloads-Tab-Item bereits einen entsprechenden
+    /// installierten Mod im Mod-Ordner hat (exakter Filename-Match). Für den
+    /// Installiert-Tab immer false — dort ist der Zustand trivial „installiert".
+    /// Steuert den grünen „✓ Installiert"-Badge auf Downloads-Cards. Muss
+    /// mutable sein damit ein Install/Uninstall live ins UI durchschlägt
+    /// ohne neue VM-Instanz.</summary>
+    [ObservableProperty] private bool _isAlreadyInstalled;
 
     /// <summary>Wird von der Update-Prüfung gesetzt, wenn eine neuere Version im Katalog steht.</summary>
     [ObservableProperty]

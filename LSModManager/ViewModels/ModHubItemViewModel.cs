@@ -6,11 +6,18 @@ namespace LSModManager.ViewModels;
 /// <summary>UI-Adapter für einen ModHub-Katalog-Eintrag. Preview wird lazy per Bindung geladen.</summary>
 public sealed partial class ModHubItemViewModel : ObservableObject
 {
-    public ModHubItemViewModel(ModHubEntry entry, bool isNew = false)
+    public ModHubItemViewModel(ModHubEntry entry, bool isNew = false, bool isInstalled = false)
     {
         Model = entry;
         _isNew = isNew;
+        IsInstalled = isInstalled;
     }
+
+    /// <summary>True wenn dieser Katalog-Eintrag als installierter Mod im
+    /// Mod-Ordner steckt (fuzzy Titel-Match, siehe
+    /// <c>MainWindowViewModel.IsCatalogEntryInstalled</c>). Steuert den
+    /// grünen „✓ INSTALLIERT"-Badge auf der Card.</summary>
+    public bool IsInstalled { get; }
 
     public ModHubEntry Model { get; }
 

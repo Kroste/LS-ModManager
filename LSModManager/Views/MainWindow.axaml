@@ -339,6 +339,16 @@
                                             <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                    <!-- „✓ INSTALLIERT"-Badge: dieser Katalog-Eintrag liegt bereits
+                                                         als Mod im LS25-Ordner (fuzzy Titel-Match, siehe
+                                                         MainWindowViewModel.IsCatalogEntryInstalled). -->
+                                                    <Border Background="{DynamicResource KrosteSuccessBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsInstalled}">
+                                                        <TextBlock Text="{loc:Tr Catalog_InstalledBadge}" FontSize="10"
+                                                                   FontWeight="SemiBold" Foreground="White" />
+                                                    </Border>
                                                     <!-- „⭐ FEATURED"-Badge: GIANTS bewirbt diesen Mod aktuell im
                                                          Featured-Slot einer Katalog-Seite. -->
                                                     <Border Background="{DynamicResource KrosteGoldBrush}"
@@ -445,7 +455,19 @@
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
-                                                <TextBlock Text="{Binding DisplayTitle}" Classes="h2" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding DisplayTitle}" Classes="h2" />
+                                                    <!-- „✓ INSTALLIERT"-Badge: dieser Download liegt bereits
+                                                         als installierter Mod im LS25-Ordner (exakter Filename-
+                                                         Match, siehe MainWindowViewModel.IsDownloadInstalled). -->
+                                                    <Border Background="{DynamicResource KrosteSuccessBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsAlreadyInstalled}">
+                                                        <TextBlock Text="{loc:Tr Catalog_InstalledBadge}" FontSize="10"
+                                                                   FontWeight="SemiBold" Foreground="White" />
+                                                    </Border>
+                                                </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{Binding Author}" Classes="muted" />
                                                     <TextBlock Text="{Binding Version}" Classes="muted"

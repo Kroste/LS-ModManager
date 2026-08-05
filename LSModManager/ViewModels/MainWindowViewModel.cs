@@ -190,6 +190,17 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// erneutes Disk-Lesen. <see cref="DownloadedMods"/> ist die sortierte Sicht.</summary>
     private readonly List<InstalledModItemViewModel> _allDownloaded = new();
 
+    /// <summary>Filenames (case-insensitive) aller installierten Mods — für den
+    /// exakten „ist installiert?"-Check im Downloads-Tab (Downloads und
+    /// Installiert nutzen denselben ZIP-Filename, kein Fuzzy-Match nötig).</summary>
+    private readonly HashSet<string> _installedFileNames = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Normalisierte Keys (Filename ohne Extension + Metadata.Title,
+    /// beides durch <see cref="NormalizeForMatch"/>) — für den fuzzy
+    /// „ist installiert?"-Check im Katalog-Tab (Katalog-Titel matcht typisch
+    /// nicht 1:1 auf ZIP-Filenames wie „FS25_AutoDrive_1_2_3.zip").</summary>
+    private readonly HashSet<string> _installedNormalizedKeys = new(StringComparer.Ordinal);
+
     public ObservableCollection<InstalledModItemViewModel> InstalledMods { get; } = new();
     public ObservableCollection<InstalledModItemViewModel> DownloadedMods { get; } = new();
     public ObservableCollection<ModHubItemViewModel> CatalogMods { get; } = new();
@@ -380,7 +391,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
             var list = await Task.Run(() => _install.ListInstalled());
             _allInstalled.Clear();
             foreach (var m in list) _allInstalled.Add(new InstalledModItemViewModel(m));
+            RebuildInstalledMatchIndex();
             RebuildInstalledView();
+            // Katalog- und Downloads-Cards zeigen einen „✓ Installiert"-Badge —
+            // der hängt am Zustand von _allInstalled. Bei jeder Install/Uninstall-
+            // Aktion muss der Rebuild triggern damit die Badges live durchgehen.
+            RebuildCatalogView();
+            RebuildDownloadedView();
             StatusText = L.F("Status_InstalledCount", _allInstalled.Count);
             OnPropertyChanged(nameof(TotalActiveSizeText));
             Log.Info("Installierte Mods aktualisiert: {n}", _allInstalled.Count);
@@ -851,7 +868,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             var list = await Task.Run(() => _install.ListDownloaded());
             _allDownloaded.Clear();
-            foreach (var m in list) _allDownloaded.Add(new InstalledModItemViewModel(m));
+            foreach (var m in list)
+                _allDownloaded.Add(new InstalledModItemViewModel(m, IsDownloadInstalled(m.FileName)));
             RebuildDownloadedView();
             Log.Info("Downloads aktualisiert: {n}", _allDownloaded.Count);
             _ = BackfillCoversAsync(_allDownloaded, isInstalled: false);
@@ -881,6 +899,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void RebuildDownloadedView()
     {
         var key = SelectedDownloadedSortOption?.Key ?? InstalledSortKey.Date;
+        // IsAlreadyInstalled auf jedem Item live nachziehen — der Match-Index
+        // kann sich seit dem letzten Download-Refresh geändert haben (Install/
+        // Uninstall im Installiert-Tab triggert den Rebuild). ObservableProperty
+        // → Badge im XAML aktualisiert sich automatisch.
+        foreach (var m in _allDownloaded)
+            m.IsAlreadyInstalled = IsDownloadInstalled(m.Model.FileName);
+
         DownloadedMods.Clear();
         // Wir wiederverwenden SortInstalled — dieselbe Sortier-Semantik greift.
         foreach (var m in SortInstalled(_allDownloaded, key))
@@ -961,6 +986,66 @@ public sealed partial class MainWindowViewModel : ObservableObject
             .FirstOrDefault()
             ?.PreviewUrl;
     }
+
+    /// <summary>Baut <see cref="_installedFileNames"/> (exakter Filename-Set)
+    /// und <see cref="_installedNormalizedKeys"/> (fuzzy Key-Set aus Filename
+    /// UND Metadata-Titel) neu auf. Wird nach jedem <see cref="RefreshInstalledAsync"/>
+    /// aufgerufen — die Badges auf Katalog- und Download-Cards lesen aus
+    /// diesen Sets ihren „Installiert"-Status.</summary>
+    private void RebuildInstalledMatchIndex()
+    {
+        _installedFileNames.Clear();
+        _installedNormalizedKeys.Clear();
+        foreach (var vm in _allInstalled)
+        {
+            var fileName = vm.Model.FileName;
+            // Für Downloads-Tab: exakter Vergleich auf ganzen Filename inkl.
+            // .zip[.disabled]-Suffix — Download-ZIP wird mit demselben Namen
+            // in den Mod-Ordner kopiert, kein Normalisieren nötig.
+            _installedFileNames.Add(fileName);
+
+            // Für Katalog-Tab: normalisierter Basisname und normalisierter
+            // Metadata-Titel — der Katalog-Titel matcht auf einen davon
+            // (Katalog nutzt oft den Anzeigenamen, Filenames sind kryptischer
+            // wie „FS25_AutoDrive_1_2_3.zip").
+            var baseName = System.IO.Path.GetFileNameWithoutExtension(
+                fileName.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                    ? fileName[..^".disabled".Length]
+                    : fileName);
+            var normalizedFile = NormalizeForMatch(baseName);
+            if (normalizedFile.Length >= 3) _installedNormalizedKeys.Add(normalizedFile);
+
+            if (vm.Model.Metadata?.Title is { Length: > 0 } title)
+            {
+                var normalizedTitle = NormalizeForMatch(title);
+                if (normalizedTitle.Length >= 3) _installedNormalizedKeys.Add(normalizedTitle);
+            }
+        }
+    }
+
+    /// <summary>True wenn ein Katalog-Eintrag als installierter Mod im
+    /// Mod-Ordner steckt — genutzt für den „✓ INSTALLIERT"-Badge auf der
+    /// Katalog-Card. Fuzzy-Match, weil Katalog-Titel und ZIP-Filename oft
+    /// abweichen. Wenn eine der Substring-Richtungen greift, gilt der Mod
+    /// als installiert (analog <see cref="LookupCatalogEntry"/>).</summary>
+    internal bool IsCatalogEntryInstalled(ModHubEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Title)) return false;
+        var normalized = NormalizeForMatch(entry.Title);
+        if (normalized.Length < 3) return false;
+        foreach (var key in _installedNormalizedKeys)
+        {
+            if (key.Length < 3) continue;
+            if (normalized.Contains(key) || key.Contains(normalized)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Exakter Filename-Vergleich für den Downloads-Tab (dort matcht
+    /// der Download-Filename 1:1 auf den installierten Filename, kein Fuzzy
+    /// nötig).</summary>
+    internal bool IsDownloadInstalled(string fileName) =>
+        _installedFileNames.Contains(fileName);
 
     private static string NormalizeForMatch(string s)
     {
@@ -1378,7 +1463,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         CatalogMods.Clear();
         foreach (var e in sorted)
-            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
+            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e), IsCatalogEntryInstalled(e)));
     }
 
     /// <summary>Nur die neuen Einträge anhängen — für den Background-Full-Load.
@@ -1388,7 +1473,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void AppendToCatalogView(IEnumerable<ModHubEntry> entries)
     {
         foreach (var e in entries.Where(MatchesFilter))
-            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
+            CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e), IsCatalogEntryInstalled(e)));
     }
 
     /// <summary>Sortiert den Katalog nach dem gewählten Key. Featured-Mods
