@@ -467,14 +467,86 @@ public sealed class ModHubService : IDisposable
                 SizeText: null));
         }
 
+        // Zusätzlich den „FEATURED MOD"-Slot oben auf jeder Katalog-Seite
+        // parsen. Das ist ein separater Container (dlc-featured--mods), der
+        // pro Seite rotiert und einen prominenten Mod hervorhebt. Bis v0.4.1
+        // wurde er ignoriert und die IDs kamen als „Mod {id}" ohne Metadaten
+        // durch — siehe pitfalls: das GIANTS-Layout hat mehrere Card-Typen,
+        // nicht nur mod-item/machines--mods.
+        var featured = ParseFeaturedCard(doc, seen);
+        if (featured is not null) entries.Add(featured);
+
         // Fallback: Wenn die neue Card-Struktur nicht greift (Site-Redesign),
         // gehen wir zurück aufs alte anker-basierte Verfahren, damit wenigstens
         // die Detail-URLs erhalten bleiben.
         if (entries.Count == 0)
             return ParseListPageLegacy(doc, html);
 
-        Log.Info("Katalog geparst: {n} Einträge", entries.Count);
+        Log.Info("Katalog geparst: {n} Einträge{f}", entries.Count,
+            featured is not null ? $" (inkl. 1 Featured: {featured.Title})" : "");
         return entries;
+    }
+
+    /// <summary>
+    /// Parst den „FEATURED MOD"-Slot einer Katalog-Seite (Container mit
+    /// Klasse <c>dlc-featured--mods</c>). Titel, Autor und Cover haben andere
+    /// XPaths als reguläre mod-item-Cards:
+    /// <list type="bullet">
+    ///   <item>Titel: <c>&lt;h3 class="color-white"&gt;…&lt;/h3&gt;</c></item>
+    ///   <item>Autor: <c>&lt;span&gt;Von: …&lt;/span&gt;</c> (Präfix „Von: " abschneiden)</item>
+    ///   <item>Cover: aus dem <c>style="background-image: url('…')"</c>-Attribut</item>
+    /// </list>
+    /// Rückgabe ist <c>null</c> wenn kein Featured-Container gefunden wird
+    /// (bei manchen Filter-URLs zeigt GIANTS keinen Featured-Slot) oder wenn
+    /// die ID schon in <paramref name="seen"/> ist (Duplikat mit einer
+    /// regulären Card, deren Metadaten in der Regel reichhaltiger sind).
+    /// </summary>
+    private static ModHubEntry? ParseFeaturedCard(HtmlDocument doc, HashSet<int> seen)
+    {
+        var container = doc.DocumentNode.SelectSingleNode(
+            "//div[contains(concat(' ',normalize-space(@class),' '),' dlc-featured--mods ')]");
+        if (container is null) return null;
+
+        var (modId, detailUrl) = FindModIdAnchor(container);
+        if (modId is null) return null;
+        // Wenn die ID schon als reguläre Card auf derselben Seite kam, nicht
+        // doppelt einfügen — sondern das MainVM darf den Featured-Status
+        // nachträglich auf den bestehenden Eintrag setzen (siehe Dedup-Logik).
+        if (!seen.Add(modId.Value)) return null;
+
+        var title = HtmlDecodeTrim(container.SelectSingleNode(".//h3")?.InnerText);
+        if (string.IsNullOrWhiteSpace(title)) return null;
+
+        // Autor: „<span>Von: Mirkomod</span>" → Präfix abschneiden.
+        var authorRaw = HtmlDecodeTrim(container.SelectSingleNode(".//p//span")?.InnerText) ?? "";
+        var author = StripAuthorPrefix(authorRaw);
+
+        // Cover: aus style="background-image: url('...')". Wenn nicht da,
+        // leer lassen — der Cover-Backfill in InstalledModItemViewModel
+        // versucht das Bild später vom CDN nachzuladen.
+        var style = container.GetAttributeValue("style", "") ?? "";
+        var coverMatch = Regex.Match(style, @"background-image:\s*url\(['""]?([^'"")]+)['""]?\)");
+        var previewUrl = coverMatch.Success ? coverMatch.Groups[1].Value : "";
+
+        return new ModHubEntry(
+            Title: title,
+            Author: author,
+            Category: "",  // Featured-Card zeigt keine Kategorie
+            PreviewUrl: previewUrl,
+            DetailUrl: detailUrl,
+            Version: null,
+            SizeText: null,
+            IsFeatured: true);
+    }
+
+    /// <summary>Featured-Autor kommt als „Von: X" / „By: X" / „Par : X"
+    /// (je Sprache) — Präfix abschneiden damit im UI nur der Autor steht.</summary>
+    private static string StripAuthorPrefix(string raw)
+    {
+        var idx = raw.IndexOf(':');
+        return idx >= 0 && idx < raw.Length - 1
+            ? raw[(idx + 1)..].Trim()
+            : raw;
     }
 
     private static (int? modId, string detailUrl) FindModIdAnchor(HtmlNode card)

@@ -141,6 +141,7 @@
   <data name="Catalog_OpenInBrowser" xml:space="preserve"><value>🌐 Öffnen</value></data>
   <data name="Catalog_Details" xml:space="preserve"><value>👁 Details</value></data>
   <data name="Catalog_NewBadge" xml:space="preserve"><value>NEU</value></data>
+  <data name="Catalog_FeaturedBadge" xml:space="preserve"><value>⭐ EMPFOHLEN</value></data>
   <data name="Catalog_SortLabel" xml:space="preserve"><value>Sortierung:</value></data>
   <data name="Catalog_Sort_Default" xml:space="preserve"><value>Standard</value></data>
   <data name="Catalog_Sort_Name" xml:space="preserve"><value>Name</value></data>

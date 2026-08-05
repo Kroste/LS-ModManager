@@ -49,4 +49,9 @@ public sealed partial class ModHubItemViewModel : ObservableObject
     /// <summary>Nur GIANTS erlaubt In-App-Download; Modhoster braucht Browser.</summary>
     public bool CanInAppDownload => Model.CanInAppDownload;
     public bool NeedsBrowser => !Model.CanInAppDownload;
+
+    /// <summary>True wenn dieser Mod aktuell im GIANTS-„Featured Mod"-Slot
+    /// beworben wird. Steuert das ⭐-FEATURED-Badge auf der Card und die
+    /// Sortier-Priorität (Featured immer oben).</summary>
+    public bool IsFeatured => Model.IsFeatured;
 }

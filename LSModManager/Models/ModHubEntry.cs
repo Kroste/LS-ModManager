@@ -18,7 +18,8 @@ public sealed record ModHubEntry(
     string? Version,
     string? SizeText,
     string Source = ModHubEntry.GiantsSource,
-    bool CanInAppDownload = true)
+    bool CanInAppDownload = true,
+    bool IsFeatured = false)
 {
     public const string GiantsSource = "GiantsModHub";
     public const string ModhosterSource = "Modhoster";

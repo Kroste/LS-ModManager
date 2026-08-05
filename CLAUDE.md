@@ -61,8 +61,15 @@
     (tmp+move). Defekte Datei wird als `settings.json.broken` gesichert, App
     startet mit Defaults weiter (Kroste-Persistenz-Regel).
   - `ModHubService`: HTTPS auf `farming-simulator.com/mods.php`, HTML-Parser mit
-    HtmlAgilityPack (defensiv). Zwei Card-Layouts: `.machines--mods`
-    (Empfehlungen, `<h3>`) und `.mod-item` (Katalog-Liste, `<h4>`).
+    HtmlAgilityPack (defensiv). **Drei** Card-Layouts: `.machines--mods`
+    (Empfehlungen, `<h3>`), `.mod-item` (Katalog-Liste, `<h4>`) und
+    `.dlc-featured--mods` (Featured-Slot pro Katalog-Seite, `<h3>` +
+    Cover-URL im `style="background-image"`, Autor als „Von: …"-`<span>`).
+    Der Featured-Container wird zusätzlich zu den regulären Cards geparst
+    (`ParseFeaturedCard`) und die Einträge bekommen `IsFeatured=true`.
+    Rotiert pro Katalog-Seite und über die Zeit, deshalb wird der Status
+    bei jedem Full-Load-Refresh komplett neu vergeben (durch das
+    `_allCatalog.Clear()` vor dem Refresh).
     **In-App-Download** direkt vom GIANTS-CDN via `DownloadModAsync`: Detail-URL
     holen → `ExtractDownloadUrl` sucht die ZIP mit passender mod_id (8-stellig
     zero-padded im CDN-Pfad) → GET mit Progress in Temp-Datei → an
@@ -158,6 +165,15 @@
   im `AppendToCatalogView` des Background-Full-Loads — sonst würden Positionen
   bei jedem Seiten-Nachlader umherspringen. Der User kann nach Full-Load
   erneut sortieren.
+  **„⭐ EMPFOHLEN"-Badge:** Der Featured-Mod-Slot der GIANTS-Katalog-Seiten
+  wird jetzt mit-geparst (siehe `ModHubService.ParseFeaturedCard`) und die
+  entsprechenden Einträge kriegen `IsFeatured=true`. Im Katalog werden sie
+  in der Sortierung IMMER nach oben priorisiert (unabhängig vom gewählten
+  Sort-Key, via `OrderByDescending(IsFeatured).ThenBy(...)`). Gold-Badge
+  auf der Card. Dedup respektiert den Featured-Status: wenn ein Mod auf
+  einer Seite als reguläre Card UND auf einer anderen Seite als Featured
+  auftaucht, wird der bestehende Eintrag per `with { IsFeatured = true }`
+  aufgewertet (`TryMergeCatalogEntry`).
   **„NEU"-Badge:** Sidecar-Datei `catalog-<lang>-seen.txt` speichert die
   DetailUrls vom vorherigen App-Start (Textformat, eine URL pro Zeile —
   kürzer und diff-freundlicher als JSON). Beim aktuellen Start wird der

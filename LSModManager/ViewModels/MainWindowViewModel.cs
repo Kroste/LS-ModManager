@@ -1135,14 +1135,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     }
                     else
                     {
-                        var existingUrls = new HashSet<string>(_allCatalog.Select(e => e.DetailUrl));
                         foreach (var e in entries)
                         {
-                            if (existingUrls.Add(e.DetailUrl))
-                            {
-                                _allCatalog.Add(e);
+                            if (TryMergeCatalogEntry(e, out var isNewInsertion) && isNewInsertion)
                                 newlyAdded.Add(e);
-                            }
                         }
                     }
                     total = _allCatalog.Count;
@@ -1283,14 +1279,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     int total;
                     lock (_catalogLock)
                     {
-                        var existingUrls = new HashSet<string>(_allCatalog.Select(e => e.DetailUrl));
                         foreach (var e in entries)
                         {
-                            if (existingUrls.Add(e.DetailUrl))
-                            {
-                                _allCatalog.Add(e);
+                            if (TryMergeCatalogEntry(e, out var isNewInsertion) && isNewInsertion)
                                 newlyAdded.Add(e);
-                            }
                         }
                         totalAdded += newlyAdded.Count;
                         total = _allCatalog.Count;
@@ -1361,16 +1353,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
             CatalogMods.Add(new ModHubItemViewModel(e, IsEntryNew(e)));
     }
 
+    /// <summary>Sortiert den Katalog nach dem gewählten Key. Featured-Mods
+    /// werden IMMER nach oben priorisiert (unabhängig vom Sort-Key) — der
+    /// User hat sich für Empfehlungs-Highlighting entschieden, die dürfen
+    /// nicht vom Namens-Sort ans Ende gedrückt werden.</summary>
     private static IEnumerable<ModHubEntry> SortCatalog(
-        IEnumerable<ModHubEntry> source, CatalogSortKey key) => key switch
+        IEnumerable<ModHubEntry> source, CatalogSortKey key)
     {
-        CatalogSortKey.Name     => source.OrderBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-        CatalogSortKey.Author   => source.OrderBy(e => e.Author, StringComparer.OrdinalIgnoreCase)
-                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-        CatalogSortKey.Category => source.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
-                                          .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
-        _                       => source, // Default: Ladereihenfolge unverändert
-    };
+        // OrderByDescending(IsFeatured) → Featured=true (=1) vor false (=0).
+        // Danach die eigentliche Sortier-Achse als Sekundär-Kriterium.
+        var featuredFirst = source.OrderByDescending(e => e.IsFeatured);
+        return key switch
+        {
+            CatalogSortKey.Name     => featuredFirst.ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+            CatalogSortKey.Author   => featuredFirst.ThenBy(e => e.Author, StringComparer.OrdinalIgnoreCase)
+                                                     .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+            CatalogSortKey.Category => featuredFirst.ThenBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
+                                                     .ThenBy(e => e.Title, StringComparer.OrdinalIgnoreCase),
+            _                       => featuredFirst, // Default: Featured oben, dann Ladereihenfolge
+        };
+    }
 
     /// <summary>True wenn der Eintrag beim vorherigen App-Start noch nicht im
     /// Katalog war (Diff gegen <see cref="_previousSeenUrls"/>). Beim Erst-Start
@@ -1523,6 +1525,38 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     private string? _lastCatalogLanguage;
+
+    /// <summary>
+    /// Fügt einen frisch geparsten Katalog-Eintrag zu <see cref="_allCatalog"/>
+    /// hinzu oder merged ihn mit einem bestehenden. Regel:
+    /// <list type="bullet">
+    ///   <item>URL noch nicht drin → normal adden. <paramref name="isNewInsertion"/> = true.</item>
+    ///   <item>URL schon drin und neue Version hat <c>IsFeatured=true</c> aber die
+    ///     bestehende nicht → bestehenden Eintrag durch die neue Featured-Version
+    ///     ersetzen (Featured-Info gewinnt). <paramref name="isNewInsertion"/> = false.</item>
+    ///   <item>URL schon drin, kein Featured-Upgrade nötig → nichts tun.
+    ///     <paramref name="isNewInsertion"/> = false.</item>
+    /// </list>
+    /// Muss unter <c>_catalogLock</c> aufgerufen werden.
+    /// </summary>
+    private bool TryMergeCatalogEntry(ModHubEntry incoming, out bool isNewInsertion)
+    {
+        isNewInsertion = false;
+        for (var i = 0; i < _allCatalog.Count; i++)
+        {
+            if (!string.Equals(_allCatalog[i].DetailUrl, incoming.DetailUrl, StringComparison.Ordinal))
+                continue;
+            if (incoming.IsFeatured && !_allCatalog[i].IsFeatured)
+            {
+                _allCatalog[i] = _allCatalog[i] with { IsFeatured = true };
+                return true;
+            }
+            return false;
+        }
+        _allCatalog.Add(incoming);
+        isNewInsertion = true;
+        return true;
+    }
 
     /// <summary>
     /// Katalog-API für das Detail-VM: Kandidaten für „Ähnliche Mods"-KI-Empfehlung.

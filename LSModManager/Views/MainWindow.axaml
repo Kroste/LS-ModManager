@@ -339,6 +339,15 @@
                                             <StackPanel Grid.Column="1" Margin="14,2,0,2" Spacing="4">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <TextBlock Text="{Binding Title}" Classes="h2" TextTrimming="CharacterEllipsis" />
+                                                    <!-- „⭐ FEATURED"-Badge: GIANTS bewirbt diesen Mod aktuell im
+                                                         Featured-Slot einer Katalog-Seite. -->
+                                                    <Border Background="{DynamicResource KrosteGoldBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsFeatured}">
+                                                        <TextBlock Text="{loc:Tr Catalog_FeaturedBadge}" FontSize="10"
+                                                                   FontWeight="SemiBold" Foreground="Black" />
+                                                    </Border>
                                                     <!-- „NEU"-Badge: Eintrag war beim letzten App-Start noch nicht im Katalog. -->
                                                     <Border Background="{DynamicResource LsFarmingGreenBrush}"
                                                             CornerRadius="10" Padding="8,1"
