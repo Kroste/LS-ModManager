@@ -261,9 +261,34 @@ public sealed partial class ModDetailViewModel : ObservableObject
     // Mods ohne erkennbare Kategorie ungewollt gesperrt.
     private bool CanFindSimilar() => IsAiEnabled && !IsSearchingSimilar;
 
-    /// <summary>Klick auf eine „Ähnliche Mods"-Card — öffnet den Browser.
-    /// Bewusst kein neues Detail-Fenster (unnötige Fenster-Kette, User kann
-    /// die Detail-URL auch selbst im Katalog suchen).</summary>
+    /// <summary>Herunterladen-Klick auf eine Empfehlungscard — delegiert an das
+    /// MainVM. Der Download läuft asynchron dort weiter (Fortschritt in der
+    /// Haupt-Statusbar, nicht hier im Detail).</summary>
+    [RelayCommand]
+    public void DownloadSimilar(ModHubItemViewModel? item)
+    {
+        if (item is null) return;
+        if (_main.DownloadCommand.CanExecute(item))
+            _main.DownloadCommand.Execute(item);
+    }
+
+    /// <summary>Details-Klick auf eine Empfehlungscard — öffnet ein NEUES
+    /// Detail-Fenster für den empfohlenen Mod. Der User hat dann ein Stack:
+    /// aktuelles Detail + neues Empfehlungs-Detail. Kann jedes einzeln
+    /// schließen. Delegiert an das MainVM, damit das Fenster mit denselben
+    /// DI-Services aufgebaut wird wie ein Katalog-Doppelklick.</summary>
+    [RelayCommand]
+    public void ShowSimilarDetails(ModHubItemViewModel? item)
+    {
+        if (item is null) return;
+        if (_main.ShowDetailsCommand.CanExecute(item))
+            _main.ShowDetailsCommand.Execute(item);
+    }
+
+    /// <summary>Öffnet die empfohlene Mod-Seite im System-Browser — Fallback
+    /// für Modhoster/Hof-Hirschfeld-Einträge die keinen In-App-Download
+    /// unterstützen. Bei GIANTS-Empfehlungen wird stattdessen der Download-
+    /// und Details-Button angezeigt.</summary>
     [RelayCommand]
     public void OpenSimilarInBrowser(ModHubItemViewModel? item)
     {

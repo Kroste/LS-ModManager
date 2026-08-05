@@ -140,24 +140,62 @@
                         <ItemsControl ItemsSource="{Binding SimilarMods}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:ModHubItemViewModel">
-                                    <Border Classes="card" Margin="0,0,0,6" Padding="10">
-                                        <Grid ColumnDefinitions="80,*,Auto">
-                                            <Border Width="80" Height="50"
+                                    <!-- Vollwertige Katalog-Card statt kompakter Zeile:
+                                         Cover + Titel/Autor/Kategorie/Source-Badge + drei
+                                         Action-Buttons (📥 Download bei GIANTS,
+                                         🌐 Öffnen bei Modhoster/Hof-Hirschfeld, 👁 Details
+                                         bei GIANTS öffnet neues Detail-Fenster). -->
+                                    <Border Classes="card" Margin="0,0,0,8" Padding="12">
+                                        <Grid ColumnDefinitions="120,*,Auto">
+                                            <Border Width="120" Height="76"
                                                     Background="{DynamicResource KrosteSurfaceBrush}"
-                                                    CornerRadius="4" ClipToBounds="True">
-                                                <Image controls:UrlImageBehavior.Url="{Binding PreviewUrl}"
-                                                       Stretch="UniformToFill" />
+                                                    CornerRadius="6" ClipToBounds="True">
+                                                <Panel>
+                                                    <TextBlock Text="🌐" FontSize="30"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource KrosteMutedTextBrush}" />
+                                                    <Image controls:UrlImageBehavior.Url="{Binding PreviewUrl}"
+                                                           Stretch="UniformToFill" />
+                                                </Panel>
                                             </Border>
-                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2"
+
+                                            <StackPanel Grid.Column="1" Margin="12,2,0,2" Spacing="4"
                                                         VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding Author}" Classes="muted" FontSize="11" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <Border Background="{DynamicResource KrosteAccentSoftBrush}"
+                                                            CornerRadius="10" Padding="8,1"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding NeedsBrowser}">
+                                                        <TextBlock Text="{Binding SourceLabel}" FontSize="10"
+                                                                   Foreground="{DynamicResource KrosteSecondaryTextBrush}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{Binding Author}" Classes="muted" FontSize="11" />
+                                                    <TextBlock Text="·" Classes="muted" FontSize="11"
+                                                               IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" />
+                                                </StackPanel>
                                             </StackPanel>
-                                            <Button Grid.Column="2" Classes="ghost" Content="🌐"
-                                                    ToolTip.Tip="{loc:Tr ModDetail_OpenInBrowser}"
-                                                    Command="{Binding $parent[Window].((vm:ModDetailViewModel)DataContext).OpenSimilarInBrowserCommand}"
-                                                    CommandParameter="{Binding}" />
+
+                                            <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Center">
+                                                <Button Classes="accent" Content="{loc:Tr Catalog_Download}"
+                                                        IsVisible="{Binding CanInAppDownload}"
+                                                        Command="{Binding $parent[Window].((vm:ModDetailViewModel)DataContext).DownloadSimilarCommand}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Classes="accent" Content="{loc:Tr Catalog_OpenInBrowser}"
+                                                        IsVisible="{Binding NeedsBrowser}"
+                                                        Command="{Binding $parent[Window].((vm:ModDetailViewModel)DataContext).OpenSimilarInBrowserCommand}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="{loc:Tr Catalog_Details}"
+                                                        HorizontalAlignment="Right"
+                                                        IsVisible="{Binding IsGiantsSource}"
+                                                        Command="{Binding $parent[Window].((vm:ModDetailViewModel)DataContext).ShowSimilarDetailsCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
