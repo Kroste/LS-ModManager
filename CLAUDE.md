@@ -169,8 +169,10 @@
   `_previousSeenUrls` ist null → `IsEntryNew` liefert immer false, kein
   Badge-Flood.
 - Downloads-Tab: Alle heruntergeladenen ZIPs aus dem persistenten
-  `AppPaths.DownloadsDir` (LocalAppData/cache/downloads bzw. XDG_CACHE). Pro
-  Card „📥 Installieren" (kopiert in Mod-Ordner) und „🗑 Löschen".
+  `AppPaths.DownloadsDir` (LocalAppData/cache/downloads bzw. XDG_CACHE) +
+  Sortier-Dropdown (Name / Größe / Datum, Default „Datum" absteigend —
+  neueste zuerst). Pro Card „📥 Installieren" (kopiert in Mod-Ordner) und
+  „🗑 Löschen".
 - ModDetailWindow: parst Detail-HTML von `mod.php?mod_id=…` (Titel, Autor,
   Kategorie, Version, Größe, Release, Rating, Beschreibung, Screenshots) und
   rendert alles in-App. „📥 Herunterladen"-Button delegiert an MainVM.
@@ -208,6 +210,22 @@
   - `AiPromptBuilder` (LS-spezifisch, NICHT im Baukasten): die zwei
     System-Prompts + User-Prompt-Builder + `ParseSimilarModTitles`-Helper
     für die Rück-Mappung der KI-Antwort.
+  - `AiSummaryCache` (LS-spezifisch): Textdatei pro `modId` unter
+    `AppPaths.AiSummariesCacheDir`. Zusammenfassungen werden beim
+    Detail-Öffnen aus dem Cache vorbelegt — spart Tokens und Wartezeit.
+    Kein Provider/Modell-Suffix bewusst, weil der Inhalt bei Wechsel nicht
+    dramatisch anders wäre.
+  - `ModDetailViewModel` hat eine History-Stack für „← Zurück"-Navigation
+    zwischen empfohlenen Mods. `ShowSimilarDetailsAsync` push't den
+    aktuellen State und ruft `LoadModAsync(newId)` — kein neues Fenster,
+    keine Modal-Kette. `GoBackAsync` pop't und lädt den vorherigen Mod.
+    KI-Buttons zeigen live-Text-Wechsel während der Anfrage
+    (`SummarizeButtonText`, `FindSimilarButtonText`) statt nur den
+    StatusText unten in der Statusbar.
+  - `ModHubItemViewModel.IsNew` ist `[ObservableProperty]` + `MarkAsSeen()`:
+    Katalog-Aktions-Commands im MainVM (`ShowDetails`, `OpenInBrowser`,
+    `DownloadAsync`) resetten den NEU-Badge sobald der User den Mod
+    interagiert. Persistent dank `SaveSeenSnapshot` bei Full-Load-Ende.
 - SettingsWindow: Mod-Pfad (Auto-Detect + manueller Override mit Folder-Picker)
   + Katalog-Sprache (ComboBox) + **App-Sprache** (ComboBox mit Länderflaggen,
   Live-Umschaltung) + **KI-Integration**-Card (Provider-ComboBox, dynamisch
