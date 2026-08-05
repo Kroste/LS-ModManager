@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using HtmlAgilityPack;
 using LSModManager.Models;
 using NLog;
 
@@ -38,6 +39,66 @@ public sealed class ModhosterCatalogService : IDisposable
         _http.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"LSModManager/{version} (+https://github.com/Kroste/LS-ModManager)");
         _http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+    }
+
+    /// <summary>
+    /// Holt die aktuellen „⭐ Staff Picks" von der Modhoster-Startseite —
+    /// vier redaktionell gepflegte Empfehlungen, die im JSON-API-Feed nicht
+    /// als Flag mitkommen (die API hat kein <c>staff_pick</c>-Feld, nur ein
+    /// unbenutztes <c>premium</c>). Rückgabe: Set der vollständigen DetailUrls
+    /// (dasselbe Format wie im Katalog-Eintrag), damit der Caller sie 1:1
+    /// gegen <see cref="ModHubEntry.DetailUrl"/> matchen kann.
+    ///
+    /// <para>Best-Effort: bei HTTP-Fehler oder Layout-Änderung wird ein leeres
+    /// Set zurückgegeben (Log-Warning), das Featured-Update wird für Modhoster
+    /// stumm übersprungen — der reguläre Katalog bleibt komplett funktional.</para>
+    /// </summary>
+    public async Task<IReadOnlySet<string>> FetchStaffPickSlugsAsync(
+        CancellationToken ct = default)
+    {
+        var url = $"{BaseUrl}/spiel/ls-25";
+        try
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(20));
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            // Startseite liefert HTML statt JSON — Accept-Default ändern.
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("text/html,application/xhtml+xml");
+            using var resp = await _http.SendAsync(req, timeoutCts.Token).ConfigureAwait(false);
+            resp.EnsureSuccessStatusCode();
+            var html = await resp.Content.ReadAsStringAsync(timeoutCts.Token).ConfigureAwait(false);
+            return ParseStaffPickSlugs(html);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, "Modhoster-Staff-Picks konnten nicht geladen werden");
+            return new HashSet<string>();
+        }
+    }
+
+    /// <summary>Testbar: HTML → Set von DetailUrls der Staff-Picks.
+    /// Selektor: alle <c>&lt;a class="modcard featured"&gt;</c>-Anker, deren
+    /// <c>href</c> mit <c>/mods/</c> beginnt. Die Klasse „featured" markiert
+    /// im Modhoster-Layout die Staff-Pick-Cards eindeutig.</summary>
+    public static IReadOnlySet<string> ParseStaffPickSlugs(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var anchors = doc.DocumentNode.SelectNodes(
+            "//a[contains(concat(' ',normalize-space(@class),' '),' featured ')]");
+        if (anchors is null) return result;
+        foreach (var a in anchors)
+        {
+            var href = a.GetAttributeValue("href", "");
+            if (string.IsNullOrEmpty(href) || !href.StartsWith("/mods/", StringComparison.Ordinal))
+                continue;
+            // Auf vollständige DetailUrl bringen — matcht dann exakt was
+            // FetchCatalogPageAsync in ModHubEntry.DetailUrl schreibt.
+            result.Add($"{BaseUrl}{href}");
+        }
+        return result;
     }
 
     public async Task<IReadOnlyList<ModHubEntry>> FetchCatalogPageAsync(

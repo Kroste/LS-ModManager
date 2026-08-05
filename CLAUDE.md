@@ -94,6 +94,13 @@
     wird verhindert.
   - `ModhosterCatalogService`: zweite Katalog-Quelle über die offene JSON-API
     `modhoster.de/mods.json?game_id=1` (game_id=1 ist bei modhoster LS25).
+    Zusätzlich `FetchStaffPickSlugsAsync` — parst die HTML-Startseite
+    `/spiel/ls-25` und extrahiert die 4 „⭐ Staff Picks" (Anker mit Klasse
+    `modcard featured`). Wird nach dem Modhoster-Full-Load aufgerufen und
+    setzt `IsFeatured=true` auf die matchenden Cache-Einträge — Modhoster-
+    Analog zum GIANTS-Featured-Slot. Die JSON-API selbst liefert keinen
+    Staff-Pick-Flag (nur ein `premium`-Feld, das für LS25 aktuell nie
+    true ist — vermutlich für kostenpflichtige Modhoster-Mods reserviert).
     24 Mods pro Seite, sequenzielles Paging mit 300 ms Delay. Kein In-App-
     Download (Modhoster braucht Login-Session, robots.txt sperrt `/external/`
     und `/redirect/`) — `ModHubEntry.CanInAppDownload=false`, UI zeigt statt

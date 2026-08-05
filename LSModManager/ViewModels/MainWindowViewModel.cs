@@ -1246,9 +1246,47 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 StatusText = L.F("Status_CatalogModhosterComplete", finalTotal);
             });
             Log.Info("Modhoster-Full-Load fertig: +{n} neue, {t} gesamt", totalAdded, finalTotal);
+
+            // Nach dem regulären Katalog-Load die Staff-Picks von der HTML-
+            // Startseite holen (4 redaktionell gepflegte Empfehlungen, nicht
+            // im JSON-Feed enthalten). Die betroffenen Cache-Einträge kriegen
+            // IsFeatured=true — Modhoster-Analog zum GIANTS-Featured-Slot.
+            await MarkModhosterStaffPicksAsFeaturedAsync(ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { /* ok */ }
         catch (Exception ex) { Log.Warn(ex, "Modhoster-Full-Load Fehler"); }
+    }
+
+    /// <summary>Holt die aktuellen Modhoster-Staff-Picks und markiert die
+    /// entsprechenden Cache-Einträge als Featured. Best-Effort: Fehler landen
+    /// nur im Log, der Katalog bleibt funktional.</summary>
+    private async Task MarkModhosterStaffPicksAsFeaturedAsync(CancellationToken ct)
+    {
+        try
+        {
+            var staffPickUrls = await _modhoster.FetchStaffPickSlugsAsync(ct).ConfigureAwait(false);
+            if (staffPickUrls.Count == 0) return;
+
+            var marked = 0;
+            lock (_catalogLock)
+            {
+                for (var i = 0; i < _allCatalog.Count; i++)
+                {
+                    if (!staffPickUrls.Contains(_allCatalog[i].DetailUrl)) continue;
+                    if (_allCatalog[i].IsFeatured) continue; // schon markiert
+                    _allCatalog[i] = _allCatalog[i] with { IsFeatured = true };
+                    marked++;
+                }
+            }
+            Log.Info("Modhoster-Staff-Picks: {n} Einträge als Featured markiert", marked);
+            // Die bereits gerenderten ModHubItemViewModels lesen ihren
+            // IsFeatured-Wert aus dem Model beim Erzeugen — ein späteres
+            // Rohlisten-Update greift nicht durch. Deshalb Rebuild triggern,
+            // damit die Badge-Bindings die frischen Werte sehen.
+            if (marked > 0)
+                Avalonia.Threading.Dispatcher.UIThread.Post(RebuildCatalogView);
+        }
+        catch (Exception ex) { Log.Warn(ex, "Modhoster-Staff-Picks-Sync fehlgeschlagen"); }
     }
 
     /// <summary>
