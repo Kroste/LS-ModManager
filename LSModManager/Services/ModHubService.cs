@@ -442,6 +442,7 @@ public sealed class ModHubService : IDisposable
             "or contains(concat(' ',normalize-space(@class),' '),' mod-item ')]")
                     ?? new HtmlNodeCollection(doc.DocumentNode);
 
+        var skippedNoTitle = 0;
         foreach (var card in cards)
         {
             var (modId, detailUrl) = FindModIdAnchor(card);
@@ -451,6 +452,14 @@ public sealed class ModHubService : IDisposable
             // Titel: h3 (machines--mods) oder h4 (mod-item)
             var title = HtmlDecodeTrim(card.SelectSingleNode(".//h3")?.InnerText)
                      ?? HtmlDecodeTrim(card.SelectSingleNode(".//div[contains(@class,'mod-item__content')]//h4")?.InnerText);
+
+            // Einträge ohne Titel sind meist gelöschte/ausgeblendete Mods
+            // (GIANTS lässt manchmal noch die Anker im HTML, aber ohne
+            // Card-Inhalt). Skippen — sonst tauchen sie im UI als „Mod {id}"
+            // ohne Cover, Autor, Kategorie auf und rutschen beim Autor-Sort
+            // sogar nach oben (Leerstring < alle anderen).
+            if (string.IsNullOrWhiteSpace(title)) { skippedNoTitle++; continue; }
+
             var author = ExtractAuthor(card);
             // Rubrik: dlc__title h4 (Empfehlungen) oder mod-label (Katalog: NEW!/UPDATE!)
             var category = HtmlDecodeTrim(card.SelectSingleNode(".//div[contains(@class,'dlc__title')]//h4")?.InnerText)
@@ -458,7 +467,7 @@ public sealed class ModHubService : IDisposable
             var previewUrl = ExtractPreview(card);
 
             entries.Add(new ModHubEntry(
-                Title: title ?? $"Mod {modId}",
+                Title: title,
                 Author: author,
                 Category: category ?? "",
                 PreviewUrl: previewUrl,
@@ -473,7 +482,11 @@ public sealed class ModHubService : IDisposable
         if (entries.Count == 0)
             return ParseListPageLegacy(doc, html);
 
-        Log.Info("Katalog geparst: {n} Einträge", entries.Count);
+        if (skippedNoTitle > 0)
+            Log.Info("Katalog geparst: {n} Einträge ({s} ohne Titel übersprungen)",
+                entries.Count, skippedNoTitle);
+        else
+            Log.Info("Katalog geparst: {n} Einträge", entries.Count);
         return entries;
     }
 

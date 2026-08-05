@@ -85,9 +85,21 @@ public static class CatalogCache
             var json = File.ReadAllText(path);
             var snapshot = JsonSerializer.Deserialize<CatalogSnapshot>(json);
             if (snapshot is null) return null;
+
+            // Historische Fallback-Einträge aus alten Cache-Dateien filtern
+            // (Titel „Mod {id}" ohne Autor/Preview — der Parser vor v0.4.2 hat
+            // die noch reingelegt, jetzt werden sie beim Parsen geskippt).
+            // Beim nächsten Full-Load-Save schreibt sich der Cache sauber neu.
+            var cleaned = snapshot.Entries
+                .Where(e => !FallbackTitlePattern.IsMatch(e.Title ?? ""))
+                .ToList();
+            var removed = snapshot.Entries.Count - cleaned.Count;
+            if (removed > 0)
+                Log.Info("Katalog-Cache: {r} Alt-Fallback-Einträge beim Load gefiltert", removed);
+
             Log.Info("Katalog-Cache geladen: {n} Einträge (Alter: {age})",
-                snapshot.Entries.Count, DateTime.UtcNow - snapshot.SavedUtc);
-            return snapshot;
+                cleaned.Count, DateTime.UtcNow - snapshot.SavedUtc);
+            return snapshot with { Entries = cleaned };
         }
         catch (Exception ex)
         {
@@ -95,6 +107,9 @@ public static class CatalogCache
             return null;
         }
     }
+
+    private static readonly System.Text.RegularExpressions.Regex FallbackTitlePattern =
+        new(@"^Mod \d+$", System.Text.RegularExpressions.RegexOptions.Compiled);
 }
 
 public sealed record CatalogSnapshot(
